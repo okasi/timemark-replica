@@ -1241,75 +1241,17 @@
       ],
     };
 
-    const TZ_CITY_TO_LOCALE = {
-      Stockholm: 'sv-SE', Gothenburg: 'sv-SE', Malmo: 'sv-SE',
-      Oslo: 'en-GB', Helsinki: 'en-GB', Mariehamn: 'en-GB', Copenhagen: 'en-GB',
-      London: 'en-GB', Jersey: 'en-GB', Guernsey: 'en-GB', 'Isle of Man': 'en-GB',
-      Paris: 'fr-FR', Monaco: 'fr-FR', Lagos: 'fr-FR', Accra: 'fr-FR', Abidjan: 'fr-FR', Dakar: 'fr-FR',
-      Berlin: 'de-DE', Busingen: 'de-DE', Vienna: 'de-DE', Zurich: 'de-DE',
-      Rome: 'it-IT', Vatican: 'it-IT', 'San Marino': 'it-IT',
-      Madrid: 'es-ES', Ceuta: 'es-ES', Santiago: 'es-ES', Montevideo: 'es-ES', Caracas: 'es-ES', Havana: 'es-ES',
-      Lisbon: 'pt-PT', Madeira: 'pt-PT',
-      Amsterdam: 'nl-NL', Vollendam: 'nl-NL', Brussels: 'nl-NL',
-      Warsaw: 'ru-RU', Kaliningrad: 'ru-RU', Moscow: 'ru-RU', Kirov: 'ru-RU', Samara: 'ru-RU', Volgograd: 'ru-RU',
-      Istanbul: 'tr-TR',
-      'New York': 'en-US', Detroit: 'en-US', Chicago: 'en-US', Menominee: 'en-US',
-      Denver: 'en-US', Boise: 'en-US', 'Los Angeles': 'en-US', Anchorage: 'en-US',
-      Juneau: 'en-US', Nome: 'en-US', Sitka: 'en-US',
-      Toronto: 'en-US', Vancouver: 'en-US', Winnipeg: 'en-US', Regina: 'en-US', Edmonton: 'en-US', Halifax: 'en-US',
-      Montreal: 'fr-CA', Quebec: 'fr-CA',
-      'Mexico City': 'es-MX', Monterrey: 'es-MX', Merida: 'es-MX',
-      Bogota: 'es-MX', Lima: 'es-MX', Guayaquil: 'es-MX',
-      'Sao Paulo': 'pt-BR', Fortaleza: 'pt-BR', Belem: 'pt-BR', Manaus: 'pt-BR',
-      Recife: 'pt-BR', Maceio: 'pt-BR', Bahia: 'pt-BR', Cuiaba: 'pt-BR',
-      'Porto Velho': 'pt-BR', 'Boa Vista': 'pt-BR', Santarem: 'pt-BR',
-      Tokyo: 'ja-JP',
-      Shanghai: 'zh-CN', Chongqing: 'zh-CN', Harbin: 'zh-CN', Kashgar: 'zh-CN', Urumqi: 'zh-CN',
-      'Hong Kong': 'zh-TW', Macau: 'zh-TW', Taipei: 'zh-TW',
-      Seoul: 'ko-KR', Pyongyang: 'ko-KR',
-      Jakarta: 'id-ID', Makassar: 'id-ID', Jayapura: 'id-ID', Pontianak: 'id-ID',
-      Kolkata: 'hi-IN', Calcutta: 'hi-IN', Karachi: 'hi-IN', Dhaka: 'hi-IN',
-      Bangkok: 'th-TH', 'Phnom Penh': 'th-TH', Vientiane: 'th-TH',
-      'Ho Chi Minh': 'vi-VN', Hanoi: 'vi-VN',
-      'Kuala Lumpur': 'en-AU', Singapore: 'en-AU', Manila: 'en-AU',
-      Auckland: 'en-AU', Chatham: 'en-AU',
-      Riyadh: 'ar-SA', Aden: 'ar-SA', Bahrain: 'ar-SA', Kuwait: 'ar-SA',
-      Dubai: 'ar-SA', Muscat: 'ar-SA',
-      Jerusalem: 'he-IL', 'Tel Aviv': 'he-IL',
-      Tehran: 'ar-SA', Cairo: 'ar-SA', Tripoli: 'ar-SA', Tunis: 'ar-SA', Algiers: 'ar-SA', Casablanca: 'ar-SA',
-      Nairobi: 'sw-KE', 'Dar es Salaam': 'sw-KE', Kampala: 'sw-KE', 'Addis Ababa': 'sw-KE',
-      Johannesburg: 'af-ZA', Harare: 'af-ZA', Gaborone: 'af-ZA',
-      Sydney: 'en-AU', Melbourne: 'en-AU', Brisbane: 'en-AU', Perth: 'en-AU',
-      Adelaide: 'en-AU', Darwin: 'en-AU', Hobart: 'en-AU', Canberra: 'en-AU',
-    };
-
     function pickRandomAddress(addressList) {
       return addressList[Math.floor(Math.random() * addressList.length)];
     }
 
-    function getFakeAddress() {
-      let timezone = 'America/New_York';
-      try {
-        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      } catch (e) {
-        console.error('Could not resolve timezone, using default', e);
-      }
+    function getLocalePlaceholderAddress(locale) {
+      const addressList = LOCALE_SAMPLE_ADDRESSES[locale] || LOCALE_SAMPLE_ADDRESSES['en-US'];
+      return pickRandomAddress(addressList);
+    }
 
-      const locale = getLocaleFromTimezone();
-      const parts = timezone.split('/');
-      let city = parts[parts.length - 1] || 'New York';
-      city = city.replace(/_/g, ' ');
-
-      const cityLocale = TZ_CITY_TO_LOCALE[city] || locale;
-      const addressList = LOCALE_SAMPLE_ADDRESSES[cityLocale] || LOCALE_SAMPLE_ADDRESSES[locale];
-
-      if (addressList) {
-        return pickRandomAddress(addressList);
-      }
-
-      const streets = ['Grand Avenue', 'Broadway', 'Pine Street', 'Oak Road', 'High Street', 'Market Square'];
-      const streetNo = Math.floor(Math.random() * 180) + 12;
-      return `${streetNo} ${streets[Math.floor(Math.random() * streets.length)]}, ${city}`;
+    function updateLocationPlaceholder() {
+      inputCustomLocation.placeholder = getLocalePlaceholderAddress(settings.locale);
     }
 
     // Elements
@@ -1452,10 +1394,7 @@
       inputCustomLine1.value = settings.customLine1;
       inputCustomLine2.value = settings.customLine2;
       inputCustomLocation.value = settings.customLocation;
-      // Placeholder shows a timezone-appropriate example address
-      if (!inputCustomLocation.placeholder) {
-        inputCustomLocation.placeholder = getFakeAddress();
-      }
+      updateLocationPlaceholder();
       
       selectFont.value = settings.fontFamily;
       toggle12h.checked = settings.is12h;
@@ -1526,6 +1465,7 @@
 
       selectLocale.addEventListener('change', (e) => {
         settings.locale = e.target.value;
+        updateLocationPlaceholder();
         redraw();
       });
 
