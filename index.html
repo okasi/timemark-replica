@@ -709,6 +709,7 @@
                 <option value="nl-NL">Dutch (nl-NL)</option>
                 <option value="ru-RU">Russian (ru-RU)</option>
                 <option value="tr-TR">Turkish (tr-TR)</option>
+                <option value="sv-SE">Swedish (sv-SE)</option>
               </optgroup>
               <optgroup label="Americas">
                 <option value="en-US">English - US (en-US)</option>
@@ -949,6 +950,40 @@
   <script type="module">
     import piexif from 'piexifjs';
 
+    const SUPPORTED_LOCALES = new Set([
+      'id-ID', 'ja-JP', 'zh-CN', 'zh-TW', 'ko-KR', 'vi-VN', 'th-TH', 'hi-IN', 'en-AU',
+      'en-GB', 'fr-FR', 'de-DE', 'it-IT', 'es-ES', 'pt-PT', 'nl-NL', 'ru-RU', 'tr-TR', 'sv-SE',
+      'en-US', 'es-MX', 'pt-BR', 'fr-CA',
+      'ar-SA', 'he-IL', 'sw-KE', 'af-ZA',
+    ]);
+
+    const LOCALE_FALLBACKS = {
+      'nb-NO': 'en-GB', 'fi-FI': 'en-GB', 'da-DK': 'en-GB',
+      'de-AT': 'de-DE', 'de-CH': 'de-DE', 'nl-BE': 'nl-NL',
+      'pl-PL': 'ru-RU', 'cs-CZ': 'en-GB', 'hu-HU': 'en-GB', 'ro-RO': 'en-GB',
+      'el-GR': 'en-GB', 'bg-BG': 'en-GB',
+      'es-CO': 'es-MX', 'es-AR': 'es-ES', 'es-CL': 'es-ES', 'es-UY': 'es-ES',
+      'es-VE': 'es-ES', 'es-CU': 'es-ES', 'en-CA': 'en-US',
+      'zh-HK': 'zh-TW', 'ms-MY': 'en-AU', 'fil-PH': 'en-AU',
+      'ar-AE': 'ar-SA', 'ar-EG': 'ar-SA', 'fa-IR': 'ar-SA',
+      'ur-PK': 'hi-IN', 'bn-BD': 'hi-IN', 'en-NZ': 'en-AU',
+    };
+
+    function resolveSupportedLocale(locale) {
+      if (SUPPORTED_LOCALES.has(locale)) return locale;
+      if (LOCALE_FALLBACKS[locale]) return LOCALE_FALLBACKS[locale];
+      const lang = locale.split('-')[0];
+      const langDefaults = {
+        sv: 'sv-SE', en: 'en-US', de: 'de-DE', fr: 'fr-FR', es: 'es-ES',
+        pt: 'pt-PT', nl: 'nl-NL', ar: 'ar-SA', zh: 'zh-CN', ja: 'ja-JP',
+        ko: 'ko-KR', id: 'id-ID', hi: 'hi-IN', th: 'th-TH', vi: 'vi-VN',
+        ru: 'ru-RU', tr: 'tr-TR', he: 'he-IL', sw: 'sw-KE', af: 'af-ZA', it: 'it-IT',
+      };
+      const candidate = langDefaults[lang];
+      if (candidate && SUPPORTED_LOCALES.has(candidate)) return candidate;
+      return 'en-US';
+    }
+
     function getLocaleFromTimezone() {
       let tz = 'America/New_York';
       try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
@@ -956,10 +991,11 @@
       // Map IANA timezone prefixes/names → BCP-47 locale
       const tzLocaleMap = [
         // Scandinavia / Nordic
-        [/^Europe\/(Stockholm|Gothenburg|Malmo)/i,       'sv-SE'],
-        [/^Europe\/(Oslo)/i,                             'nb-NO'],
-        [/^Europe\/(Helsinki|Mariehamn)/i,               'fi-FI'],
-        [/^Europe\/(Copenhagen)/i,                       'da-DK'],
+        [/^Europe\/Stockholm$/i,                          'sv-SE'],
+        [/^Europe\/(Gothenburg|Malmo)$/i,                 'sv-SE'],
+        [/^Europe\/Oslo$/i,                              'nb-NO'],
+        [/^Europe\/(Helsinki|Mariehamn)$/i,              'fi-FI'],
+        [/^Europe\/Copenhagen$/i,                         'da-DK'],
         // Western Europe
         [/^Europe\/(London|Jersey|Guernsey|Isle_of_Man)/i,'en-GB'],
         [/^Europe\/(Paris|Monaco)/i,                    'fr-FR'],
@@ -980,23 +1016,19 @@
         [/^Europe\/(Istanbul)/i,                        'tr-TR'],
         [/^Europe\/(Moscow|Kirov|Samara|Volgograd)/i,   'ru-RU'],
         // Americas
-        [/^America\/(New_York|Detroit|Indiana|Kentucky|Toronto|Montreal|Halifax)/i, 'en-US'],
-        [/^America\/(Chicago|Menominee|Winnipeg)/i,     'en-US'],
-        [/^America\/(Denver|Boise|Edmonton)/i,          'en-US'],
-        [/^America\/(Los_Angeles|Vancouver|Tijuana)/i,  'en-US'],
-        [/^America\/(Anchorage|Juneau|Nome|Sitka)/i,    'en-US'],
-        [/^America\/(Mexico_City|Monterrey|Merida)/i,   'es-MX'],
-        [/^America\/(Bogota|Lima|Guayaquil)/i,          'es-CO'],
-        [/^America\/(Buenos_Aires|Argentina)/i,         'es-AR'],
-        [/^America\/(Santiago)/i,                       'es-CL'],
-        [/^America\/(Sao_Paulo|Fortaleza|Belem|Manaus|Recife|Maceio|Bahia|Cuiaba|Porto_Velho|Boa_Vista|Santarem)/i, 'pt-BR'],
-        [/^America\/(Montevideo)/i,                     'es-UY'],
-        [/^America\/(Caracas)/i,                        'es-VE'],
-        [/^America\/(Havana)/i,                         'es-CU'],
-        [/^America\/(Toronto|Vancouver|Winnipeg|Regina|Edmonton)/i, 'en-CA'],
-        [/^America\/(Quebec|Montreal)/i,                'fr-CA'],
+        [/^America\/(Quebec|Montreal)$/i,                'fr-CA'],
+        [/^America\/(Mexico_City|Monterrey|Merida)$/i,   'es-MX'],
+        [/^America\/(Bogota|Lima|Guayaquil)$/i,          'es-CO'],
+        [/^America\/(Buenos_Aires|Argentina\/.*)$/i,     'es-AR'],
+        [/^America\/Santiago$/i,                         'es-CL'],
+        [/^America\/(Sao_Paulo|Fortaleza|Belem|Manaus|Recife|Maceio|Bahia|Cuiaba|Porto_Velho|Boa_Vista|Santarem)$/i, 'pt-BR'],
+        [/^America\/Montevideo$/i,                       'es-UY'],
+        [/^America\/Caracas$/i,                          'es-VE'],
+        [/^America\/Havana$/i,                           'es-CU'],
+        [/^America\/(Toronto|Vancouver|Winnipeg|Regina|Edmonton|Halifax)$/i, 'en-CA'],
+        [/^America\/(New_York|Detroit|Chicago|Menominee|Denver|Boise|Los_Angeles|Anchorage|Juneau|Nome|Sitka|Indiana\/.*|Kentucky\/.*)$/i, 'en-US'],
         // Asia
-        [/^Asia\/(Tokyo|)/i,                            'ja-JP'],
+        [/^Asia\/Tokyo$/i,                               'ja-JP'],
         [/^Asia\/(Shanghai|Chongqing|Harbin|Kashgar|Urumqi)/i, 'zh-CN'],
         [/^Asia\/(Hong_Kong|Macau)/i,                   'zh-HK'],
         [/^Asia\/(Taipei)/i,                            'zh-TW'],
@@ -1024,7 +1056,7 @@
       ];
 
       for (const [pattern, locale] of tzLocaleMap) {
-        if (pattern.test(tz)) return locale;
+        if (pattern.test(tz)) return resolveSupportedLocale(locale);
       }
 
       // Broad-region fallbacks
@@ -1038,86 +1070,246 @@
       // Last resort: try the browser's navigator.language
       try {
         const lang = navigator.language || navigator.languages[0];
-        if (lang) return lang;
+        if (lang) return resolveSupportedLocale(lang);
       } catch (e) {}
 
       return 'en-US';
     }
 
+    const LOCALE_SAMPLE_ADDRESSES = {
+      'sv-SE': [
+        'Vasagatan 16, 111 20 Stockholm',
+        'Sveavägen 45, 111 34 Stockholm',
+        'Kungsgatan 12, 111 43 Stockholm',
+        'Drottninggatan 80, 111 36 Stockholm',
+        'Avenyn 18, 411 36 Göteborg',
+        'Nordstadstorget 2, 411 05 Göteborg',
+      ],
+      'en-GB': [
+        '221B Baker St, London NW1 6XE',
+        '45 Piccadilly, London W1J 0DS',
+        '12 Regent St, London SW1Y 4QQ',
+        '1 Cathedral Close, St Helier JE2 3NN',
+        'High St, St Peter Port GY1 1JQ',
+      ],
+      'fr-FR': [
+        '15 Rue de Rivoli, 75001 Paris',
+        '4 Avenue des Champs-Élysées, 75008 Paris',
+        '22 Rue de la Paix, 75002 Paris',
+        '7 Avenue Princesse Grace, 98000 Monaco',
+        '12 Rue de la République, 69002 Lyon',
+      ],
+      'de-DE': [
+        'Friedrichstraße 95, 10117 Berlin',
+        'Unter den Linden 21, 10117 Berlin',
+        'Kurfürstendamm 26, 10719 Berlin',
+        'Marienplatz 8, 80331 München',
+        'Zeil 106, 60313 Frankfurt am Main',
+      ],
+      'it-IT': [
+        'Via del Corso 189, 00186 Roma',
+        'Piazza San Pietro, 00120 Città del Vaticano',
+        'Via Giacomo Matteotti 10, 47890 Dogana, San Marino',
+        'Via Monte Napoleone 8, 20121 Milano',
+      ],
+      'es-ES': [
+        'Calle Gran Vía 28, 28013 Madrid',
+        'Paseo de Gracia 43, 08007 Barcelona',
+        'Plaza de la Candelaria 1, 51001 Ceuta',
+        'Calle Sierpes 41, 41004 Sevilla',
+      ],
+      'pt-PT': [
+        'Rua Augusta 24, 1100-053 Lisboa',
+        'Avenida da Liberdade 125, 1250-140 Lisboa',
+        'Rua de Santa Maria 77, 9060-291 Funchal, Madeira',
+        'Rua de Cedofeita 256, 4050-180 Porto',
+      ],
+      'nl-NL': [
+        'Damrak 70, 1012 LM Amsterdam',
+        'Kalverstraat 92, 1012 PH Amsterdam',
+        'Coolsingel 40, 3011 AD Rotterdam',
+        'Lange Voorhout 74, 2514 EH Den Haag',
+      ],
+      'ru-RU': [
+        'ул. Тверская 12, 125009 Москва',
+        'Невский проспект 28, 191186 Санкт-Петербург',
+        'ул. Баумана 58, 420111 Казань',
+        'пр. Ленина 25, 630004 Новосибирск',
+      ],
+      'tr-TR': [
+        'İstiklal Cd. No:142, 34433 Beyoğlu, İstanbul',
+        'Bağdat Cd. No:237, 34728 Kadıköy, İstanbul',
+        'Atatürk Blv. No:89, 35210 Konak, İzmir',
+      ],
+      'en-US': [
+        '350 5th Ave, New York, NY 10118',
+        '767 5th Ave, New York, NY 10153',
+        '233 S Wacker Dr, Chicago, IL 60606',
+        '1600 Amphitheatre Pkwy, Mountain View, CA 94043',
+        '1000 4th Ave, Seattle, WA 98164',
+      ],
+      'es-MX': [
+        'Paseo de la Reforma 296, 06600 Ciudad de México',
+        'Av. Insurgentes Sur 1602, 03920 Ciudad de México',
+        'Av. Constitución 1000, 64000 Monterrey, N.L.',
+        'Calle 60 No. 453, 97000 Mérida, Yuc.',
+      ],
+      'pt-BR': [
+        'Av. Paulista 1578, Bela Vista, São Paulo - SP',
+        'Rua da Carioca 39, Centro, Rio de Janeiro - RJ',
+        'Av. Afonso Pena 867, Centro, Belo Horizonte - MG',
+        'Rua XV de Novembro 123, Centro, Curitiba - PR',
+      ],
+      'fr-CA': [
+        '1000 Rue de la Gauchetière O, Montréal, QC H3B 4W5',
+        '1 Place Ville Marie, Montréal, QC H3B 3Y1',
+        '1045 Rue des Parlementaires, Québec, QC G1A 1A4',
+      ],
+      'ja-JP': [
+        '1-7-1 Nagatacho, Chiyoda-ku, Tokyo 100-0014',
+        '2-2-1 Yaesu, Chuo-ku, Tokyo 104-0028',
+        '6-10-1 Roppongi, Minato-ku, Tokyo 106-0032',
+        '3-1-3 Shibuya, Shibuya-ku, Tokyo 150-0002',
+      ],
+      'zh-CN': [
+        '南京东路 200 号, 上海市 200001',
+        '长安街 1 号, 北京市 100006',
+        '解放碑步行街 88 号, 重庆市 400010',
+        '中央大街 128 号, 哈尔滨市 150010',
+      ],
+      'zh-TW': [
+        '台北市信義區信義路五段 7 號',
+        '台北市大安區忠孝東路四段 216 號',
+        '台北市中山區南京東路二段 100 號',
+      ],
+      'ko-KR': [
+        '서울특별시 종로구 세종대로 209',
+        '서울특별시 강남구 테헤란로 152',
+        '부산광역시 해운대구 해운대해변로 264',
+      ],
+      'id-ID': [
+        'Jl. M.H. Thamrin No.59, Jakarta Pusat 10350',
+        'Jl. Jend. Sudirman Kav. 21, Jakarta Selatan 12190',
+        'Jl. Gatot Subroto No.10, Jakarta Selatan 12930',
+        'Jl. Asia Afrika No.8, Bandung 40111',
+      ],
+      'hi-IN': [
+        '15 Park Street, Kolkata, West Bengal 700016',
+        'Connaught Place, New Delhi 110001',
+        'MG Road, Bengaluru, Karnataka 560001',
+        'Marine Drive, Mumbai, Maharashtra 400020',
+      ],
+      'th-TH': [
+        '999/9 Rama I Rd, Pathum Wan, Bangkok 10330',
+        '57 Witthayu Rd, Lumphini, Bangkok 10330',
+        'ถนนศรีนครินทร์ 88, กรุงเทพฯ 10110',
+      ],
+      'vi-VN': [
+        '92 Lê Lợi, Quận 1, TP. Hồ Chí Minh',
+        '36 Hàng Bài, Hoàn Kiếm, Hà Nội',
+        '220 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh',
+      ],
+      'en-AU': [
+        '343 George St, Sydney NSW 2000',
+        '100 Barangaroo Ave, Sydney NSW 2000',
+        '180 Flinders St, Melbourne VIC 3000',
+        'Queen St Mall, Brisbane QLD 4000',
+        '87-89 Customs St W, Auckland 1010',
+      ],
+      'ar-SA': [
+        'King Fahd Rd, Al Olaya, Riyadh 12211',
+        'Tahlia St, Al Zahra, Jeddah 23425',
+        'Sheikh Zayed Rd, Dubai, UAE',
+        '26th July St, Zamalek, Cairo 11561',
+      ],
+      'he-IL': [
+        '1 Ben Yehuda St, Tel Aviv-Yafo 6340501',
+        '12 King George St, Jerusalem 9422901',
+        'HaNassi Blvd 45, Haifa 3464202',
+      ],
+      'sw-KE': [
+        'Kenyatta Ave, Nairobi 00100',
+        'Ohio St, Dar es Salaam 11101',
+        'Kampala Rd, Kampala 256',
+        'Churchill Ave, Addis Ababa 1000',
+      ],
+      'af-ZA': [
+        'Sandton Dr, Sandton, Johannesburg 2196',
+        'Long St, Cape Town City Centre 8001',
+        'Samora Machel Ave, Harare 263',
+        'Main Mall, Gaborone 267',
+      ],
+    };
+
+    const TZ_CITY_TO_LOCALE = {
+      Stockholm: 'sv-SE', Gothenburg: 'sv-SE', Malmo: 'sv-SE',
+      Oslo: 'en-GB', Helsinki: 'en-GB', Mariehamn: 'en-GB', Copenhagen: 'en-GB',
+      London: 'en-GB', Jersey: 'en-GB', Guernsey: 'en-GB', 'Isle of Man': 'en-GB',
+      Paris: 'fr-FR', Monaco: 'fr-FR', Lagos: 'fr-FR', Accra: 'fr-FR', Abidjan: 'fr-FR', Dakar: 'fr-FR',
+      Berlin: 'de-DE', Busingen: 'de-DE', Vienna: 'de-DE', Zurich: 'de-DE',
+      Rome: 'it-IT', Vatican: 'it-IT', 'San Marino': 'it-IT',
+      Madrid: 'es-ES', Ceuta: 'es-ES', Santiago: 'es-ES', Montevideo: 'es-ES', Caracas: 'es-ES', Havana: 'es-ES',
+      Lisbon: 'pt-PT', Madeira: 'pt-PT',
+      Amsterdam: 'nl-NL', Vollendam: 'nl-NL', Brussels: 'nl-NL',
+      Warsaw: 'ru-RU', Kaliningrad: 'ru-RU', Moscow: 'ru-RU', Kirov: 'ru-RU', Samara: 'ru-RU', Volgograd: 'ru-RU',
+      Istanbul: 'tr-TR',
+      'New York': 'en-US', Detroit: 'en-US', Chicago: 'en-US', Menominee: 'en-US',
+      Denver: 'en-US', Boise: 'en-US', 'Los Angeles': 'en-US', Anchorage: 'en-US',
+      Juneau: 'en-US', Nome: 'en-US', Sitka: 'en-US',
+      Toronto: 'en-US', Vancouver: 'en-US', Winnipeg: 'en-US', Regina: 'en-US', Edmonton: 'en-US', Halifax: 'en-US',
+      Montreal: 'fr-CA', Quebec: 'fr-CA',
+      'Mexico City': 'es-MX', Monterrey: 'es-MX', Merida: 'es-MX',
+      Bogota: 'es-MX', Lima: 'es-MX', Guayaquil: 'es-MX',
+      'Sao Paulo': 'pt-BR', Fortaleza: 'pt-BR', Belem: 'pt-BR', Manaus: 'pt-BR',
+      Recife: 'pt-BR', Maceio: 'pt-BR', Bahia: 'pt-BR', Cuiaba: 'pt-BR',
+      'Porto Velho': 'pt-BR', 'Boa Vista': 'pt-BR', Santarem: 'pt-BR',
+      Tokyo: 'ja-JP',
+      Shanghai: 'zh-CN', Chongqing: 'zh-CN', Harbin: 'zh-CN', Kashgar: 'zh-CN', Urumqi: 'zh-CN',
+      'Hong Kong': 'zh-TW', Macau: 'zh-TW', Taipei: 'zh-TW',
+      Seoul: 'ko-KR', Pyongyang: 'ko-KR',
+      Jakarta: 'id-ID', Makassar: 'id-ID', Jayapura: 'id-ID', Pontianak: 'id-ID',
+      Kolkata: 'hi-IN', Calcutta: 'hi-IN', Karachi: 'hi-IN', Dhaka: 'hi-IN',
+      Bangkok: 'th-TH', 'Phnom Penh': 'th-TH', Vientiane: 'th-TH',
+      'Ho Chi Minh': 'vi-VN', Hanoi: 'vi-VN',
+      'Kuala Lumpur': 'en-AU', Singapore: 'en-AU', Manila: 'en-AU',
+      Auckland: 'en-AU', Chatham: 'en-AU',
+      Riyadh: 'ar-SA', Aden: 'ar-SA', Bahrain: 'ar-SA', Kuwait: 'ar-SA',
+      Dubai: 'ar-SA', Muscat: 'ar-SA',
+      Jerusalem: 'he-IL', 'Tel Aviv': 'he-IL',
+      Tehran: 'ar-SA', Cairo: 'ar-SA', Tripoli: 'ar-SA', Tunis: 'ar-SA', Algiers: 'ar-SA', Casablanca: 'ar-SA',
+      Nairobi: 'sw-KE', 'Dar es Salaam': 'sw-KE', Kampala: 'sw-KE', 'Addis Ababa': 'sw-KE',
+      Johannesburg: 'af-ZA', Harare: 'af-ZA', Gaborone: 'af-ZA',
+      Sydney: 'en-AU', Melbourne: 'en-AU', Brisbane: 'en-AU', Perth: 'en-AU',
+      Adelaide: 'en-AU', Darwin: 'en-AU', Hobart: 'en-AU', Canberra: 'en-AU',
+    };
+
+    function pickRandomAddress(addressList) {
+      return addressList[Math.floor(Math.random() * addressList.length)];
+    }
+
     function getFakeAddress() {
-      let timezone = "America/New_York";
+      let timezone = 'America/New_York';
       try {
         timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       } catch (e) {
-        console.error("Could not resolve timezone, using default", e);
+        console.error('Could not resolve timezone, using default', e);
       }
-      
+
+      const locale = getLocaleFromTimezone();
       const parts = timezone.split('/');
-      let city = parts[parts.length - 1] || "New York";
+      let city = parts[parts.length - 1] || 'New York';
       city = city.replace(/_/g, ' ');
-      
-      const cityAddresses = {
-        "Stockholm": [
-          "Vasagatan 16, Stockholm",
-          "Sveavägen 45, Norrmalm",
-          "Kungsgatan 12, Stockholm",
-          "Drottninggatan 80, Norrmalm"
-        ],
-        "Gothenburg": [
-          "Avenyn 18, Göteborg",
-          "Nordstadstorget 2, Göteborg"
-        ],
-        "London": [
-          "221B Baker St, London NW1 6XE",
-          "45 Piccadilly, London W1J 0DS",
-          "12 Regent St, London SW1Y 4QQ"
-        ],
-        "New York": [
-          "350 5th Ave, New York, NY 10118",
-          "767 5th Ave, New York, NY 10153",
-          "1221 Avenue of the Americas, New York, NY 10020"
-        ],
-        "Paris": [
-          "15 Rue de Rivoli, 75001 Paris",
-          "4 Avenue des Champs-Élysées, 75008 Paris",
-          "22 Rue de la Paix, 75002 Paris"
-        ],
-        "Berlin": [
-          "Friedrichstraße 95, 10117 Berlin",
-          "Unter den Linden 21, 10117 Berlin",
-          "Kurfürstendamm 26, 10719 Berlin"
-        ],
-        "Jakarta": [
-          "Jl. M.H. Thamrin No.59, Jakarta Pusat",
-          "Jl. Jend. Sudirman Kav. 21, Jakarta Selatan",
-          "Jl. Gatot Subroto No.10, Jakarta Selatan"
-        ],
-        "Tokyo": [
-          "1-7-1 Nagatacho, Chiyoda-ku, Tokyo",
-          "2-2-1 Yaesu, Chuo-ku, Tokyo",
-          "6-10-1 Roppongi, Minato-ku, Tokyo"
-        ],
-        "Sydney": [
-          "343 George St, Sydney NSW 2000",
-          "100 Barangaroo Ave, Sydney NSW 2000"
-        ]
-      };
 
-      let addressList = cityAddresses[city];
-      if (!addressList) {
-        const foundCity = Object.keys(cityAddresses).find(k => k.toLowerCase() === city.toLowerCase());
-        if (foundCity) {
-          addressList = cityAddresses[foundCity];
-        }
+      const cityLocale = TZ_CITY_TO_LOCALE[city] || locale;
+      const addressList = LOCALE_SAMPLE_ADDRESSES[cityLocale] || LOCALE_SAMPLE_ADDRESSES[locale];
+
+      if (addressList) {
+        return pickRandomAddress(addressList);
       }
 
-      if (!addressList) {
-        const streets = ["Grand Avenue", "Broadway", "Pine Street", "Oak Road", "High Street", "Market Square"];
-        const streetNo = Math.floor(Math.random() * 180) + 12;
-        return `${streetNo} ${streets[Math.floor(Math.random() * streets.length)]}, ${city}`;
-      }
-
-      return addressList[Math.floor(Math.random() * addressList.length)];
+      const streets = ['Grand Avenue', 'Broadway', 'Pine Street', 'Oak Road', 'High Street', 'Market Square'];
+      const streetNo = Math.floor(Math.random() * 180) + 12;
+      return `${streetNo} ${streets[Math.floor(Math.random() * streets.length)]}, ${city}`;
     }
 
     // Elements
