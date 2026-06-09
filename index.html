@@ -1,0 +1,2279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timemark Replica</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400&family=Oswald:wght@400&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0a0b0d;
+      --bg-sidebar: rgba(18, 20, 26, 0.82);
+      --bg-card: rgba(25, 28, 36, 0.6);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(255, 204, 0, 0.5);
+      
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --text-muted: #6b7280;
+      
+      --accent: #ffcc00;
+      --accent-hover: #e6b800;
+      --accent-rgb: 255, 204, 0;
+      --accent-glow: rgba(255, 204, 0, 0.15);
+      
+      --sidebar-width: 380px;
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      color-scheme: dark;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Layout Wrapper */
+    #app-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* Sidebar controls */
+    #sidebar {
+      width: var(--sidebar-width);
+      height: 100%;
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      box-shadow: var(--shadow-lg);
+      flex-shrink: 0;
+    }
+
+    #sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #sidebar-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff380 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #sidebar-title svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--accent);
+      fill: none;
+    }
+
+    #sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    #sidebar-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    #sidebar-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #sidebar-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    #sidebar-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Setting Card Groups */
+    .control-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: border-color var(--transition-fast);
+    }
+    
+    .control-group:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .group-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+      margin-bottom: 4px;
+    }
+
+    .btn-reset-small {
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-reset-small:hover {
+      color: var(--accent);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Form Fields */
+    .field-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+    }
+
+    select, input[type="text"], input[type="date"], input[type="time"] {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
+    }
+
+    select:focus, input[type="text"]:focus, input[type="date"]:focus, input[type="time"]:focus {
+      border-color: var(--accent);
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Switch Option */
+    .switch-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-toggle {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    .slider-toggle:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #ffffff;
+      transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: var(--shadow-sm);
+    }
+
+    input:checked + .slider-toggle {
+      background-color: var(--accent);
+    }
+
+    input:checked + .slider-toggle:before {
+      transform: translateX(20px);
+    }
+
+    /* Sliders (Range inputs) */
+    .range-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .range-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .range-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-glow);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+      transition: transform var(--transition-fast), background var(--transition-fast);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+      background: #ffffff;
+    }
+
+    /* Color picker wrapper */
+    .color-picker-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: none;
+      outline: none;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+
+    /* Sidebar Footer / Action Buttons */
+    #sidebar-footer {
+      padding: 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all var(--transition-normal);
+      outline: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, #ffaa00 100%);
+      color: #0c0d12;
+      border: none;
+      box-shadow: 0 4px 14px rgba(255, 204, 0, 0.2);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(255, 204, 0, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    /* Preview Area (Right Viewport) */
+    #preview-viewport {
+      flex: 1;
+      height: 100%;
+      background: #090a0d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 40px;
+      overflow: hidden;
+    }
+
+    /* Grid Overlay background */
+    #preview-viewport::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.005) 1px, transparent 1px);
+      background-size: 20px 20px, 100px 100px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #canvas-container {
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75);
+      border-radius: 8px;
+      overflow: hidden;
+      max-width: 100%;
+      max-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: transform var(--transition-normal);
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    /* Drag over overlay */
+    #drag-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(10, 11, 13, 0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-normal);
+      border: 3px dashed var(--accent);
+      margin: 20px;
+      border-radius: 16px;
+    }
+
+    #drag-overlay.active {
+      opacity: 1;
+    }
+
+    .drag-msg {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .drag-msg svg {
+      width: 64px;
+      height: 64px;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 1.5;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .drag-msg h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .drag-msg p {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+
+    /* Floating Banner Warning */
+    #cors-warning {
+      position: absolute;
+      top: 20px;
+      left: calc(var(--sidebar-width) + 20px);
+      right: 20px;
+      background: rgba(239, 68, 68, 0.15);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 12px 16px;
+      border-radius: 8px;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: #fca5a5;
+      box-shadow: var(--shadow-md);
+      animation: slideInDown var(--transition-normal);
+    }
+
+    #cors-warning svg {
+      width: 20px;
+      height: 20px;
+      stroke: #ef4444;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    #cors-warning button {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      cursor: pointer;
+      margin-left: auto;
+      font-weight: bold;
+    }
+
+    @keyframes slideInDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Loader */
+    #image-loader {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top: 3px solid var(--accent);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* EXIF Toast */
+    #exif-toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(25, 28, 36, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 200;
+      white-space: nowrap;
+    }
+
+    #exif-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #exif-toast .toast-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    #exif-toast.success { border-color: rgba(74, 222, 128, 0.3); }
+    #exif-toast.success .toast-icon { stroke: #4ade80; }
+    #exif-toast.info { border-color: rgba(96, 165, 250, 0.3); }
+    #exif-toast.info .toast-icon { stroke: #60a5fa; }
+    #exif-toast.warn { border-color: rgba(251, 191, 36, 0.3); }
+    #exif-toast.warn .toast-icon { stroke: #fbbf24; }
+
+    /* Responsive Design */
+    @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+      #app-container {
+        flex-direction: column-reverse;
+        height: auto;
+        min-height: 100vh;
+      }
+      #sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-top: 1px solid var(--border-color);
+      }
+      #preview-viewport {
+        height: 65vh;
+        min-height: 450px;
+        padding: 12px;
+      }
+      #cors-warning {
+        left: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <!-- Sidebar Control Panel -->
+    <aside id="sidebar">
+      
+      <div id="sidebar-header">
+        <h1 id="sidebar-title">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Timemark Replica
+        </h1>
+      </div>
+      
+      <div id="sidebar-content">
+        
+        <!-- Image Loader Options -->
+        <div class="control-group">
+          <span class="group-title">Source Image</span>
+          <div class="field-wrapper">
+            <button class="btn btn-secondary" id="btn-browse-file">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Image
+            </button>
+            <input type="file" id="file-uploader" accept="image/*" style="display: none;">
+          </div>
+          <div class="field-wrapper">
+            <button class="btn btn-secondary" id="btn-use-sample" style="font-size: 13px; padding: 8px 12px;">
+              Reset to Sample Scenery
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode Options -->
+        <div class="control-group">
+          <span class="group-title">Time & Date Source</span>
+          
+
+          
+          <div class="field-wrapper">
+            <label for="select-locale">Date Language (Locale)</label>
+            <select id="select-locale">
+              <optgroup label="Asia & Oceania">
+                <option value="id-ID">Indonesian (id-ID)</option>
+                <option value="ja-JP">Japanese (ja-JP)</option>
+                <option value="zh-CN">Chinese - Simplified (zh-CN)</option>
+                <option value="zh-TW">Chinese - Traditional (zh-TW)</option>
+                <option value="ko-KR">Korean (ko-KR)</option>
+                <option value="vi-VN">Vietnamese (vi-VN)</option>
+                <option value="th-TH">Thai (th-TH)</option>
+                <option value="hi-IN">Hindi (hi-IN)</option>
+                <option value="en-AU">English - Australia (en-AU)</option>
+              </optgroup>
+              <optgroup label="Europe">
+                <option value="en-GB">English - UK (en-GB)</option>
+                <option value="fr-FR">French (fr-FR)</option>
+                <option value="de-DE">German (de-DE)</option>
+                <option value="it-IT">Italian (it-IT)</option>
+                <option value="es-ES">Spanish (es-ES)</option>
+                <option value="pt-PT">Portuguese (pt-PT)</option>
+                <option value="nl-NL">Dutch (nl-NL)</option>
+                <option value="ru-RU">Russian (ru-RU)</option>
+                <option value="tr-TR">Turkish (tr-TR)</option>
+              </optgroup>
+              <optgroup label="Americas">
+                <option value="en-US">English - US (en-US)</option>
+                <option value="es-MX">Spanish - Mexico (es-MX)</option>
+                <option value="pt-BR">Portuguese - Brazil (pt-BR)</option>
+                <option value="fr-CA">French - Canada (fr-CA)</option>
+              </optgroup>
+              <optgroup label="Africa & Middle East">
+                <option value="ar-SA">Arabic - Saudi Arabia (ar-SA)</option>
+                <option value="he-IL">Hebrew (he-IL)</option>
+                <option value="sw-KE">Swahili (sw-KE)</option>
+                <option value="af-ZA">Afrikaans (af-ZA)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="field-wrapper">
+            <label for="select-preset">Layout Preset</label>
+            <select id="select-preset">
+              <option value="layoutA" selected>Preset A: DD Month YYYY + Day (Photo 1)</option>
+              <option value="layoutB">Preset B: DD Month + Year (Photo 2)</option>
+              <option value="custom">Preset C: Custom Override Text</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Custom Manual Input Fields -->
+        <div class="control-group" id="manual-inputs-group">
+          <span class="group-title">Custom Watermark Overrides</span>
+          
+          <div class="switch-wrapper" style="margin-bottom: 8px;">
+            <label for="toggle-manual-override">Enable Manual Editing</label>
+            <label class="switch">
+              <input type="checkbox" id="toggle-manual-override" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+          
+          <div class="field-wrapper">
+            <label for="input-date-picker">Date Override</label>
+            <input type="date" id="input-date-picker">
+          </div>
+          
+          <div class="field-wrapper">
+            <label for="input-time-picker">Time Override</label>
+            <input type="time" id="input-time-picker">
+          </div>
+          
+          <div class="field-wrapper" id="custom-line1-wrapper">
+            <label for="input-custom-line1">Custom Line 1 (Top)</label>
+            <input type="text" id="input-custom-line1" placeholder="e.g. Location or custom text">
+          </div>
+          
+          <div class="field-wrapper" id="custom-line2-wrapper">
+            <label for="input-custom-line2">Custom Line 2 (Bottom)</label>
+            <input type="text" id="input-custom-line2" placeholder="e.g. Additional custom text">
+          </div>
+          
+          <div class="field-wrapper" id="custom-location-wrapper">
+            <label for="input-custom-location">Location (Bottom Line)</label>
+            <input type="text" id="input-custom-location" placeholder="">
+          </div>
+        </div>
+
+        <!-- Watermark Layout Options -->
+        <div class="control-group">
+          <span class="group-title">Watermark Design</span>
+
+          <div class="field-wrapper">
+            <label for="select-font">Font Family</label>
+            <select id="select-font">
+              <option value="Barlow Condensed" selected>Barlow Condensed (Google Font)</option>
+              <option value="Oswald">Oswald (Google Font)</option>
+            </select>
+          </div>
+
+          <div class="switch-wrapper">
+            <label for="toggle-12h">12-Hour Format (AM/PM)</label>
+            <label class="switch">
+              <input type="checkbox" id="toggle-12h">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
+          <!-- Color Customizations -->
+          <div class="color-picker-wrapper">
+            <div class="field-wrapper" style="flex: 1;">
+              <label for="color-divider">Divider Line</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="color-divider" value="#FFC845">
+                <span style="font-size: 13px; font-weight: 500;">Timemark Yellow</span>
+              </div>
+            </div>
+            <div class="field-wrapper" style="flex: 1;">
+              <label for="color-text">Text Color</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="color-text" value="#ffffff">
+                <span style="font-size: 13px; font-weight: 500;">White</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Size and scale sliders -->
+          <div class="range-container">
+            <div class="range-header">
+              <label for="range-scale">Watermark Scale</label>
+              <span class="range-value" id="val-scale">1.0x</span>
+            </div>
+            <input type="range" id="range-scale" min="0.4" max="2.5" step="0.05" value="1.0">
+          </div>
+
+          <div class="range-container">
+            <div class="range-header">
+              <label for="range-margin-x">X Margin (Bottom-Left)</label>
+              <span class="range-value" id="val-margin-x">5%</span>
+            </div>
+            <input type="range" id="range-margin-x" min="2" max="25" step="0.5" value="5">
+          </div>
+
+          <div class="range-container">
+            <div class="range-header">
+              <label for="range-margin-y">Y Margin (Bottom-Left)</label>
+              <span class="range-value" id="val-margin-y">5%</span>
+            </div>
+            <input type="range" id="range-margin-y" min="2" max="25" step="0.5" value="5">
+          </div>
+        </div>
+
+        <!-- Advanced divider and shadow adjustments -->
+        <div class="control-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 8px; margin-bottom: 4px;">
+            <span class="group-title" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">Fidelity Adjustments</span>
+            <button id="btn-reset-fidelity" class="btn-reset-small" title="Reset Fidelity Settings">
+              <svg viewBox="0 0 24 24" style="width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; transform: scaleX(-1);"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5"/></svg>
+              Reset
+            </button>
+          </div>
+          
+          <div class="range-container">
+            <div class="range-header">
+              <label for="range-divider-width">Divider Thickness</label>
+              <span class="range-value" id="val-divider-width">1.0x</span>
+            </div>
+            <input type="range" id="range-divider-width" min="0.5" max="3.0" step="0.1" value="1.0">
+          </div>
+
+          <div class="range-container">
+            <div class="range-header">
+              <label for="range-divider-height">Divider Height</label>
+              <span class="range-value" id="val-divider-height">1.0x</span>
+            </div>
+            <input type="range" id="range-divider-height" min="0.5" max="1.5" step="0.05" value="1.0">
+          </div>
+
+          <div class="range-container">
+            <div class="range-header">
+              <label for="range-divider-offset">Divider Spacing</label>
+              <span class="range-value" id="val-divider-offset">1.0x</span>
+            </div>
+            <input type="range" id="range-divider-offset" min="0.5" max="2.5" step="0.1" value="1.0">
+          </div>
+
+          <div class="range-container">
+            <div class="range-header">
+              <label for="range-shadow-opacity">Shadow Opacity</label>
+              <span class="range-value" id="val-shadow-opacity">0.5</span>
+            </div>
+            <input type="range" id="range-shadow-opacity" min="0.0" max="1.0" step="0.05" value="0.5">
+          </div>
+
+          <div class="range-container">
+            <div class="range-header">
+              <label for="range-shadow-blur">Shadow Blur</label>
+              <span class="range-value" id="val-shadow-blur">1.0x</span>
+            </div>
+            <input type="range" id="range-shadow-blur" min="0.0" max="3.0" step="0.1" value="1.0">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Footer -->
+      <div id="sidebar-footer">
+        <button class="btn btn-primary" id="btn-download">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Watermarked
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- Preview Viewport -->
+    <main id="preview-viewport">
+      
+      <!-- Warning Banner -->
+      <div id="cors-warning">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div>
+          <strong>Local File Warning:</strong> Running via <code>file://</code> taints canvas downloads on the default sample image. 
+          Upload your own image, or run <code>npm run dev</code> for a local server.
+        </div>
+        <button id="btn-close-warning">×</button>
+      </div>
+      
+      <!-- Spinner Loader -->
+      <div id="image-loader">
+        <div class="spinner"></div>
+        <p style="font-size: 13px; color: var(--text-sub);">Processing Image...</p>
+      </div>
+
+      <!-- Drag and Drop Overlay -->
+      <div id="drag-overlay">
+        <div class="drag-msg">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <h3>Drop image to import</h3>
+          <p>Supports PNG, JPEG, WEBP, and more</p>
+        </div>
+      </div>
+
+      <!-- Canvas preview wrapper -->
+      <div id="canvas-container">
+        <canvas id="preview-canvas"></canvas>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- EXIF status toast -->
+  <div id="exif-toast">
+    <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    <span id="exif-toast-msg"></span>
+  </div>
+
+  <!-- Hidden canvas for high-res operations -->
+  <canvas id="export-canvas" style="display: none;"></canvas>
+
+  <script type="module">
+    import piexif from 'piexifjs';
+
+    function getLocaleFromTimezone() {
+      let tz = 'America/New_York';
+      try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
+
+      // Map IANA timezone prefixes/names → BCP-47 locale
+      const tzLocaleMap = [
+        // Scandinavia / Nordic
+        [/^Europe\/(Stockholm|Gothenburg|Malmo)/i,       'sv-SE'],
+        [/^Europe\/(Oslo)/i,                             'nb-NO'],
+        [/^Europe\/(Helsinki|Mariehamn)/i,               'fi-FI'],
+        [/^Europe\/(Copenhagen)/i,                       'da-DK'],
+        // Western Europe
+        [/^Europe\/(London|Jersey|Guernsey|Isle_of_Man)/i,'en-GB'],
+        [/^Europe\/(Paris|Monaco)/i,                    'fr-FR'],
+        [/^Europe\/(Berlin|Busingen)/i,                 'de-DE'],
+        [/^Europe\/(Vienna)/i,                          'de-AT'],
+        [/^Europe\/(Zurich)/i,                          'de-CH'],
+        [/^Europe\/(Rome|Vatican|San_Marino)/i,         'it-IT'],
+        [/^Europe\/(Madrid|Ceuta)/i,                    'es-ES'],
+        [/^Europe\/(Lisbon|Madeira)/i,                  'pt-PT'],
+        [/^Europe\/(Amsterdam|Vollendam)/i,             'nl-NL'],
+        [/^Europe\/(Brussels)/i,                        'nl-BE'],
+        [/^Europe\/(Warsaw|Kaliningrad)/i,              'pl-PL'],
+        [/^Europe\/(Prague)/i,                          'cs-CZ'],
+        [/^Europe\/(Budapest)/i,                        'hu-HU'],
+        [/^Europe\/(Bucharest)/i,                       'ro-RO'],
+        [/^Europe\/(Athens|Nicosia)/i,                  'el-GR'],
+        [/^Europe\/(Sofia)/i,                           'bg-BG'],
+        [/^Europe\/(Istanbul)/i,                        'tr-TR'],
+        [/^Europe\/(Moscow|Kirov|Samara|Volgograd)/i,   'ru-RU'],
+        // Americas
+        [/^America\/(New_York|Detroit|Indiana|Kentucky|Toronto|Montreal|Halifax)/i, 'en-US'],
+        [/^America\/(Chicago|Menominee|Winnipeg)/i,     'en-US'],
+        [/^America\/(Denver|Boise|Edmonton)/i,          'en-US'],
+        [/^America\/(Los_Angeles|Vancouver|Tijuana)/i,  'en-US'],
+        [/^America\/(Anchorage|Juneau|Nome|Sitka)/i,    'en-US'],
+        [/^America\/(Mexico_City|Monterrey|Merida)/i,   'es-MX'],
+        [/^America\/(Bogota|Lima|Guayaquil)/i,          'es-CO'],
+        [/^America\/(Buenos_Aires|Argentina)/i,         'es-AR'],
+        [/^America\/(Santiago)/i,                       'es-CL'],
+        [/^America\/(Sao_Paulo|Fortaleza|Belem|Manaus|Recife|Maceio|Bahia|Cuiaba|Porto_Velho|Boa_Vista|Santarem)/i, 'pt-BR'],
+        [/^America\/(Montevideo)/i,                     'es-UY'],
+        [/^America\/(Caracas)/i,                        'es-VE'],
+        [/^America\/(Havana)/i,                         'es-CU'],
+        [/^America\/(Toronto|Vancouver|Winnipeg|Regina|Edmonton)/i, 'en-CA'],
+        [/^America\/(Quebec|Montreal)/i,                'fr-CA'],
+        // Asia
+        [/^Asia\/(Tokyo|)/i,                            'ja-JP'],
+        [/^Asia\/(Shanghai|Chongqing|Harbin|Kashgar|Urumqi)/i, 'zh-CN'],
+        [/^Asia\/(Hong_Kong|Macau)/i,                   'zh-HK'],
+        [/^Asia\/(Taipei)/i,                            'zh-TW'],
+        [/^Asia\/(Seoul|Pyongyang)/i,                   'ko-KR'],
+        [/^Asia\/(Jakarta|Makassar|Jayapura|Pontianak)/i,'id-ID'],
+        [/^Asia\/(Kolkata|Calcutta)/i,                  'hi-IN'],
+        [/^Asia\/(Bangkok|Phnom_Penh|Vientiane)/i,      'th-TH'],
+        [/^Asia\/(Ho_Chi_Minh|Hanoi)/i,                 'vi-VN'],
+        [/^Asia\/(Kuala_Lumpur|Singapore)/i,            'ms-MY'],
+        [/^Asia\/(Manila)/i,                            'fil-PH'],
+        [/^Asia\/(Riyadh|Aden|Bahrain|Kuwait)/i,        'ar-SA'],
+        [/^Asia\/(Dubai|Muscat)/i,                      'ar-AE'],
+        [/^Asia\/(Jerusalem|Tel_Aviv)/i,                'he-IL'],
+        [/^Asia\/(Tehran)/i,                            'fa-IR'],
+        [/^Asia\/(Karachi)/i,                           'ur-PK'],
+        [/^Asia\/(Dhaka)/i,                             'bn-BD'],
+        // Oceania
+        [/^Australia\//i,                               'en-AU'],
+        [/^Pacific\/(Auckland|Chatham)/i,               'en-NZ'],
+        // Africa
+        [/^Africa\/(Nairobi|Dar_es_Salaam|Kampala|Addis_Ababa)/i, 'sw-KE'],
+        [/^Africa\/(Johannesburg|Harare|Gaborone)/i,    'af-ZA'],
+        [/^Africa\/(Cairo|Tripoli|Tunis|Algiers|Casablanca)/i, 'ar-EG'],
+        [/^Africa\/(Lagos|Accra|Abidjan|Dakar)/i,       'fr-FR'],
+      ];
+
+      for (const [pattern, locale] of tzLocaleMap) {
+        if (pattern.test(tz)) return locale;
+      }
+
+      // Broad-region fallbacks
+      const region = tz.split('/')[0];
+      if (region === 'America')  return 'en-US';
+      if (region === 'Europe')   return 'en-GB';
+      if (region === 'Asia')     return 'en-GB';
+      if (region === 'Africa')   return 'en-GB';
+      if (region === 'Australia' || region === 'Pacific') return 'en-AU';
+
+      // Last resort: try the browser's navigator.language
+      try {
+        const lang = navigator.language || navigator.languages[0];
+        if (lang) return lang;
+      } catch (e) {}
+
+      return 'en-US';
+    }
+
+    function getFakeAddress() {
+      let timezone = "America/New_York";
+      try {
+        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      } catch (e) {
+        console.error("Could not resolve timezone, using default", e);
+      }
+      
+      const parts = timezone.split('/');
+      let city = parts[parts.length - 1] || "New York";
+      city = city.replace(/_/g, ' ');
+      
+      const cityAddresses = {
+        "Stockholm": [
+          "Vasagatan 16, Stockholm",
+          "Sveavägen 45, Norrmalm",
+          "Kungsgatan 12, Stockholm",
+          "Drottninggatan 80, Norrmalm"
+        ],
+        "Gothenburg": [
+          "Avenyn 18, Göteborg",
+          "Nordstadstorget 2, Göteborg"
+        ],
+        "London": [
+          "221B Baker St, London NW1 6XE",
+          "45 Piccadilly, London W1J 0DS",
+          "12 Regent St, London SW1Y 4QQ"
+        ],
+        "New York": [
+          "350 5th Ave, New York, NY 10118",
+          "767 5th Ave, New York, NY 10153",
+          "1221 Avenue of the Americas, New York, NY 10020"
+        ],
+        "Paris": [
+          "15 Rue de Rivoli, 75001 Paris",
+          "4 Avenue des Champs-Élysées, 75008 Paris",
+          "22 Rue de la Paix, 75002 Paris"
+        ],
+        "Berlin": [
+          "Friedrichstraße 95, 10117 Berlin",
+          "Unter den Linden 21, 10117 Berlin",
+          "Kurfürstendamm 26, 10719 Berlin"
+        ],
+        "Jakarta": [
+          "Jl. M.H. Thamrin No.59, Jakarta Pusat",
+          "Jl. Jend. Sudirman Kav. 21, Jakarta Selatan",
+          "Jl. Gatot Subroto No.10, Jakarta Selatan"
+        ],
+        "Tokyo": [
+          "1-7-1 Nagatacho, Chiyoda-ku, Tokyo",
+          "2-2-1 Yaesu, Chuo-ku, Tokyo",
+          "6-10-1 Roppongi, Minato-ku, Tokyo"
+        ],
+        "Sydney": [
+          "343 George St, Sydney NSW 2000",
+          "100 Barangaroo Ave, Sydney NSW 2000"
+        ]
+      };
+
+      let addressList = cityAddresses[city];
+      if (!addressList) {
+        const foundCity = Object.keys(cityAddresses).find(k => k.toLowerCase() === city.toLowerCase());
+        if (foundCity) {
+          addressList = cityAddresses[foundCity];
+        }
+      }
+
+      if (!addressList) {
+        const streets = ["Grand Avenue", "Broadway", "Pine Street", "Oak Road", "High Street", "Market Square"];
+        const streetNo = Math.floor(Math.random() * 180) + 12;
+        return `${streetNo} ${streets[Math.floor(Math.random() * streets.length)]}, ${city}`;
+      }
+
+      return addressList[Math.floor(Math.random() * addressList.length)];
+    }
+
+    // Elements
+    const previewCanvas = document.getElementById('preview-canvas');
+    const exportCanvas = document.getElementById('export-canvas');
+    const uploader = document.getElementById('file-uploader');
+    const dragOverlay = document.getElementById('drag-overlay');
+    const warningBanner = document.getElementById('cors-warning');
+    const loader = document.getElementById('image-loader');
+    
+    // Controls
+
+    const selectLocale = document.getElementById('select-locale');
+    const selectPreset = document.getElementById('select-preset');
+    const toggleManualOverride = document.getElementById('toggle-manual-override');
+    
+    // Picker and override elements
+    const inputDatePicker = document.getElementById('input-date-picker');
+    const inputTimePicker = document.getElementById('input-time-picker');
+    const inputCustomLine1 = document.getElementById('input-custom-line1');
+    const inputCustomLine2 = document.getElementById('input-custom-line2');
+    const inputCustomLocation = document.getElementById('input-custom-location');
+    
+    const selectFont = document.getElementById('select-font');
+    const toggle12h = document.getElementById('toggle-12h');
+    const colorDivider = document.getElementById('color-divider');
+    const colorText = document.getElementById('color-text');
+    
+    const rangeScale = document.getElementById('range-scale');
+    const rangeMarginX = document.getElementById('range-margin-x');
+    const rangeMarginY = document.getElementById('range-margin-y');
+    
+    const rangeDividerWidth = document.getElementById('range-divider-width');
+    const rangeDividerHeight = document.getElementById('range-divider-height');
+    const rangeDividerOffset = document.getElementById('range-divider-offset');
+    const rangeShadowOpacity = document.getElementById('range-shadow-opacity');
+    const rangeShadowBlur = document.getElementById('range-shadow-blur');
+
+    // Buttons
+    const btnBrowse = document.getElementById('btn-browse-file');
+    const btnDownload = document.getElementById('btn-download');
+    const btnSample = document.getElementById('btn-use-sample');
+    const btnResetFidelity = document.getElementById('btn-reset-fidelity');
+    const exifToast = document.getElementById('exif-toast');
+    const exifToastMsg = document.getElementById('exif-toast-msg');
+    let toastTimer = null;
+
+    function showToast(msg, type = 'success') {
+      exifToastMsg.textContent = msg;
+      exifToast.className = `show ${type}`;
+      // Swap icon based on type
+      const iconPath = exifToast.querySelector('.toast-icon path:last-child');
+      if (type === 'success') {
+        iconPath.setAttribute('d', 'm9 12 2 2 4-4');
+      } else if (type === 'info') {
+        iconPath.setAttribute('d', 'M12 8v4m0 4h.01');
+      } else {
+        iconPath.setAttribute('d', 'M12 9v4m0 4h.01');
+      }
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { exifToast.className = exifToast.className.replace('show', '').trim(); }, 4000);
+    }
+
+    // App state
+    let originalImage = new Image();
+    let isSampleLoaded = false;
+
+    let uploadedFileName = '';
+
+    const settings = {
+
+      locale: getLocaleFromTimezone(),
+      preset: 'layoutA',
+      manualOverride: true,
+      
+      manualDate: '',
+      manualTime: '',
+      customLine1: '',
+      customLine2: '',
+      customLocation: '',
+      
+      fontFamily: 'Barlow Condensed',
+      is12h: false,
+      dividerColor: '#FFC845',
+      textColor: '#ffffff',
+      
+      scale: 1.0,
+      marginX: 5,
+      marginY: 5,
+      
+      dividerWidth: 1.0,
+      dividerHeight: 1.0,
+      dividerOffset: 1.0,
+      shadowOpacity: 0.5,
+      shadowBlur: 1.0,
+      shadowOffset: 1.0
+    };
+
+    // Initialize Page
+    window.addEventListener('DOMContentLoaded', () => {
+      fillInputsWithCurrentTime();
+      // Set initial values in sliders/selectors from state
+      syncUIWithSettings();
+      setupEventListeners();
+      checkProtocol();
+      
+      // Load all Google fonts and redraw when ready
+      // Load all Google fonts and weights and redraw when ready
+      const fontsToLoad = [
+        '400 16px "Barlow Condensed"',
+        '400 16px "Oswald"'
+      ];
+      Promise.all(fontsToLoad.map(f => document.fonts.load(f)))
+        .then(() => {
+          loadDefaultImage();
+        })
+        .catch(() => {
+          loadDefaultImage(); // proceed anyway if network fails
+        });
+        
+
+    });
+
+    // Check if running on file protocol
+    function checkProtocol() {
+      if (window.location.protocol === 'file:') {
+        // We will show warning only if they try to download sample
+        console.warn("App is running on file:// protocol. The default sample.png image may taint the canvas.");
+      }
+    }
+
+    function syncUIWithSettings() {
+
+      selectLocale.value = settings.locale;
+      selectPreset.value = settings.preset;
+      toggleManualOverride.checked = settings.manualOverride;
+      
+      inputDatePicker.value = settings.manualDate;
+      inputTimePicker.value = settings.manualTime;
+      inputCustomLine1.value = settings.customLine1;
+      inputCustomLine2.value = settings.customLine2;
+      inputCustomLocation.value = settings.customLocation;
+      // Placeholder shows a timezone-appropriate example address
+      if (!inputCustomLocation.placeholder) {
+        inputCustomLocation.placeholder = getFakeAddress();
+      }
+      
+      selectFont.value = settings.fontFamily;
+      toggle12h.checked = settings.is12h;
+      colorDivider.value = settings.dividerColor;
+      colorText.value = settings.textColor;
+      
+      rangeScale.value = settings.scale;
+      rangeMarginX.value = settings.marginX;
+      rangeMarginY.value = settings.marginY;
+      
+      rangeDividerWidth.value = settings.dividerWidth;
+      rangeDividerHeight.value = settings.dividerHeight;
+      rangeDividerOffset.value = settings.dividerOffset;
+      rangeShadowOpacity.value = settings.shadowOpacity;
+      rangeShadowBlur.value = settings.shadowBlur;
+
+      // Update manual input form field visibilities
+      updateManualInputState();
+      updateCustomLinesVisibility();
+      
+      // Update values
+      document.getElementById('val-scale').textContent = settings.scale.toFixed(2) + 'x';
+      document.getElementById('val-margin-x').textContent = settings.marginX + '%';
+      document.getElementById('val-margin-y').textContent = settings.marginY + '%';
+      document.getElementById('val-divider-width').textContent = settings.dividerWidth.toFixed(1) + 'x';
+      document.getElementById('val-divider-height').textContent = settings.dividerHeight.toFixed(2) + 'x';
+      document.getElementById('val-divider-offset').textContent = settings.dividerOffset.toFixed(1) + 'x';
+      document.getElementById('val-shadow-opacity').textContent = settings.shadowOpacity.toFixed(2);
+      document.getElementById('val-shadow-blur').textContent = settings.shadowBlur.toFixed(1) + 'x';
+    }
+
+    function updateManualInputState() {
+      const canEdit = settings.manualOverride;
+      inputDatePicker.disabled = !canEdit;
+      inputTimePicker.disabled = !canEdit;
+      inputCustomLine1.disabled = !canEdit;
+      inputCustomLine2.disabled = !canEdit;
+      inputCustomLocation.disabled = !canEdit;
+      
+      const group = document.getElementById('manual-inputs-group');
+      group.style.opacity = canEdit ? '1.0' : '0.6';
+    }
+    
+    function updateCustomLinesVisibility() {
+      const isCustom = settings.preset === 'custom';
+      const line1Wrapper = document.getElementById('custom-line1-wrapper');
+      const line2Wrapper = document.getElementById('custom-line2-wrapper');
+      
+      if (isCustom) {
+        line1Wrapper.style.display = 'flex';
+        line2Wrapper.style.display = 'flex';
+      } else {
+        line1Wrapper.style.display = 'none';
+        line2Wrapper.style.display = 'none';
+      }
+    }
+
+     function setupEventListeners() {
+      // Click listeners
+      btnBrowse.addEventListener('click', () => uploader.click());
+      uploader.addEventListener('change', handleFileSelect);
+      btnSample.addEventListener('click', loadDefaultImage);
+      btnDownload.addEventListener('click', downloadWatermarkedImage);
+      btnResetFidelity.addEventListener('click', resetFidelityAdjustments);
+
+      // Value updates
+
+
+      selectLocale.addEventListener('change', (e) => {
+        settings.locale = e.target.value;
+        redraw();
+      });
+
+      selectPreset.addEventListener('change', (e) => {
+        settings.preset = e.target.value;
+        
+        // Custom preset automatically turns on manual edit controls
+        if (settings.preset === 'custom') {
+          settings.manualOverride = true;
+          toggleManualOverride.checked = true;
+          updateManualInputState();
+        }
+        
+        updateCustomLinesVisibility();
+        redraw();
+      });
+
+      toggleManualOverride.addEventListener('change', (e) => {
+        settings.manualOverride = e.target.checked;
+        updateManualInputState();
+        fillInputsWithCurrentTime();
+        redraw();
+      });
+
+      // Text override field input listeners
+      inputDatePicker.addEventListener('change', (e) => {
+        settings.manualDate = e.target.value || new Date().toISOString().split('T')[0];
+        redraw();
+      });
+
+      inputTimePicker.addEventListener('change', (e) => {
+        settings.manualTime = e.target.value || '12:00';
+        redraw();
+      });
+
+      inputCustomLine1.addEventListener('input', (e) => {
+        settings.customLine1 = e.target.value;
+        redraw();
+      });
+
+      inputCustomLine2.addEventListener('input', (e) => {
+        settings.customLine2 = e.target.value;
+        redraw();
+      });
+
+      inputCustomLocation.addEventListener('input', (e) => {
+        settings.customLocation = e.target.value;
+        redraw();
+      });
+
+      document.getElementById('btn-close-warning').addEventListener('click', () => {
+        warningBanner.style.display = 'none';
+      });
+
+      selectFont.addEventListener('change', (e) => {
+        settings.fontFamily = e.target.value;
+        document.fonts.load(`400 16px '${settings.fontFamily}'`).then(redraw);
+      });
+
+      toggle12h.addEventListener('change', (e) => {
+        settings.is12h = e.target.checked;
+        redraw();
+      });
+
+      colorDivider.addEventListener('input', (e) => {
+        settings.dividerColor = e.target.value;
+        redraw();
+      });
+
+      colorText.addEventListener('input', (e) => {
+        settings.textColor = e.target.value;
+        redraw();
+      });
+
+      // Sliders
+      rangeScale.addEventListener('input', (e) => {
+        settings.scale = parseFloat(e.target.value);
+        document.getElementById('val-scale').textContent = settings.scale.toFixed(2) + 'x';
+        redraw();
+      });
+
+      rangeMarginX.addEventListener('input', (e) => {
+        settings.marginX = parseFloat(e.target.value);
+        document.getElementById('val-margin-x').textContent = settings.marginX + '%';
+        redraw();
+      });
+
+      rangeMarginY.addEventListener('input', (e) => {
+        settings.marginY = parseFloat(e.target.value);
+        document.getElementById('val-margin-y').textContent = settings.marginY + '%';
+        redraw();
+      });
+
+      rangeDividerWidth.addEventListener('input', (e) => {
+        settings.dividerWidth = parseFloat(e.target.value);
+        document.getElementById('val-divider-width').textContent = settings.dividerWidth.toFixed(1) + 'x';
+        redraw();
+      });
+
+      rangeDividerHeight.addEventListener('input', (e) => {
+        settings.dividerHeight = parseFloat(e.target.value);
+        document.getElementById('val-divider-height').textContent = settings.dividerHeight.toFixed(2) + 'x';
+        redraw();
+      });
+
+      rangeDividerOffset.addEventListener('input', (e) => {
+        settings.dividerOffset = parseFloat(e.target.value);
+        document.getElementById('val-divider-offset').textContent = settings.dividerOffset.toFixed(1) + 'x';
+        redraw();
+      });
+
+      rangeShadowOpacity.addEventListener('input', (e) => {
+        settings.shadowOpacity = parseFloat(e.target.value);
+        document.getElementById('val-shadow-opacity').textContent = settings.shadowOpacity.toFixed(2);
+        redraw();
+      });
+
+      rangeShadowBlur.addEventListener('input', (e) => {
+        settings.shadowBlur = parseFloat(e.target.value);
+        document.getElementById('val-shadow-blur').textContent = settings.shadowBlur.toFixed(1) + 'x';
+        redraw();
+      });
+
+      // Window resizing
+      window.addEventListener('resize', () => {
+        updatePreview();
+      });
+
+      // Drag and Drop
+      const viewport = document.getElementById('preview-viewport');
+      
+      viewport.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dragOverlay.classList.add('active');
+      });
+
+      viewport.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragOverlay.classList.remove('active');
+      });
+
+      viewport.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragOverlay.classList.remove('active');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          loadImageFile(files[0]);
+        }
+      });
+    }
+
+
+
+    // Auto-population uploader helper
+    function fillInputsWithCurrentTime() {
+      const now = new Date();
+      
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const timeStr = `${hours}:${minutes}`;
+      
+      inputDatePicker.value = dateStr;
+      inputTimePicker.value = timeStr;
+      
+      settings.manualDate = dateStr;
+      settings.manualTime = timeStr;
+    }
+
+    // Date formatting engine
+    function getFormattedDateTime(date, locale, is12h) {
+      let timeStr = "";
+      let ampmStr = "";
+      
+      if (is12h) {
+        let hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        timeStr = `${hours}:${minutes}`;
+        ampmStr = ampm;
+      } else {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        timeStr = `${hours}:${minutes}`;
+      }
+      
+      try {
+        const day = date.getDate().toString().padStart(2, '0');
+        
+        // Month name
+        const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'short' });
+        let month = monthFormatter.format(date);
+        month = month.replace('.', '');
+        month = month.charAt(0).toUpperCase() + month.slice(1);
+        
+        const year = date.getFullYear();
+        
+        // Day of week
+        const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: 'long' });
+        let weekday = weekdayFormatter.format(date);
+        weekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+        
+        return {
+          time: timeStr,
+          ampm: ampmStr,
+          day,
+          month,
+          year,
+          weekday
+        };
+      } catch (e) {
+        console.error("Formatting error", e);
+        return {
+          time: timeStr,
+          ampm: ampmStr,
+          day: "09",
+          month: "Jun",
+          year: "2026",
+          weekday: "Tuesday"
+        };
+      }
+    }
+
+    function resetFidelityAdjustments() {
+      settings.dividerWidth = 1.0;
+      settings.dividerHeight = 1.0;
+      settings.dividerOffset = 1.0;
+      settings.shadowOpacity = 0.5;
+      settings.shadowBlur = 1.0;
+      
+      syncUIWithSettings();
+      redraw();
+    }
+
+    // File selection handlers
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        loadImageFile(file);
+      }
+    }
+
+    function tryExtractExifDateTime(dataUrl) {
+      try {
+        const exifObj = piexif.load(dataUrl);
+        let exifDateStr = '';
+        let lat = null;
+        let lon = null;
+        
+        if (exifObj && exifObj['Exif']) {
+          exifDateStr = exifObj['Exif'][piexif.ExifIFD.DateTimeOriginal] || 
+                        exifObj['Exif'][piexif.ExifIFD.DateTimeDigitized];
+        }
+        
+        if (!exifDateStr && exifObj && exifObj['0th']) {
+          exifDateStr = exifObj['0th'][piexif.ImageIFD.DateTime];
+        }
+        
+        // Extract GPS if present
+        if (exifObj && exifObj['GPS']) {
+          const gps = exifObj['GPS'];
+          const convertGPS = (val, ref) => {
+            if (!val || val.length < 3) return null;
+            try {
+              const d = val[0][0] / (val[0][1] || 1);
+              const m = val[1][0] / (val[1][1] || 1);
+              const s = val[2][0] / (val[2][1] || 1);
+              let dec = d + (m / 60) + (s / 3600);
+              if (ref === 'S' || ref === 'W') dec = -dec;
+              return dec;
+            } catch (e) {
+              console.warn("GPS segment conversion failed:", e);
+              return null;
+            }
+          };
+          lat = convertGPS(gps[piexif.GPSIFD.GPSLatitude], gps[piexif.GPSIFD.GPSLatitudeRef]);
+          lon = convertGPS(gps[piexif.GPSIFD.GPSLongitude], gps[piexif.GPSIFD.GPSLongitudeRef]);
+        }
+        
+        let result = null;
+        if (exifDateStr && typeof exifDateStr === 'string') {
+          const match = exifDateStr.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+          if (match) {
+            const [_, yyyy, mm, dd, hh, min, ss] = match;
+            result = {
+              date: `${yyyy}-${mm}-${dd}`,
+              time: `${hh}:${min}`
+            };
+          }
+        }
+        
+        return {
+          dateTime: result,
+          gps: (lat !== null && lon !== null) ? { lat, lon } : null
+        };
+      } catch (err) {
+        console.warn("Could not read EXIF data from image:", err);
+      }
+      return null;
+    }
+
+    /**
+     * Tries to parse a date/time from common camera & phone filename conventions:
+     *   IMG_20240115_153045.jpg       (Android)
+     *   VID_20240115_153045.mp4       (Android video)
+     *   20240115_153045.jpg
+     *   Screenshot_2024-01-15-15-30-45.jpg
+     *   IMG-20240115-WA0001.jpg       (WhatsApp — date only)
+     *   2024-01-15 15.30.45.jpg
+     *   2024-01-15_15-30-45.jpg
+     *   photo_2024_01_15_15_30_45.jpg
+     * Returns { date: 'YYYY-MM-DD', time: 'HH:mm' } or null.
+     */
+    function tryExtractDateTimeFromFilename(filename) {
+      // Normalise macOS "at" separator: "2026-06-09 at 15.51.47" → "2026-06-09 15.51.47"
+      const name = filename.replace(/\.[^.]+$/, '').replace(/\bat\b/gi, ' ').trim();
+
+      const patterns = [
+        // YYYY-MM-DD HH.mm.ss  (macOS: "2026-06-09 at 15.51.47", also plain space)
+        /((\d{4})-(\d{2})-(\d{2})\s+(\d{2})[.:\-](\d{2})[.:\-](\d{2}))/,
+        // YYYYMMDD_HHmmss  or  YYYYMMDD-HHmmss
+        /(?:^|[_\-. ])((\d{4})(\d{2})(\d{2})[_\-](\d{2})(\d{2})(\d{2}))(?:[_\-. ]|$)/,
+        // YYYY-MM-DD-HH-mm-ss  (Screenshot_2024-01-15-15-30-45)
+        /((\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2}))/,
+        // YYYY-MM-DD_HH-mm-ss
+        /((\d{4})-(\d{2})-(\d{2})[_](\d{2})[.:\-](\d{2})[.:\-](\d{2}))/,
+        // YYYY_MM_DD_HH_mm_ss
+        /((\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2}))/,
+        // YYYYMMDD only (WhatsApp: IMG-20240115-WA0001)
+        /(?:^|[_\-. ])((\d{4})(\d{2})(\d{2}))(?:[_\-. ]|$)/,
+        // YYYY-MM-DD only
+        /((\d{4})-(\d{2})-(\d{2}))/,
+      ];
+
+      for (const re of patterns) {
+        const m = name.match(re);
+        if (!m) continue;
+
+        // All patterns capture groups starting at index 2
+        const groups = m.slice(2).filter(Boolean);
+
+        // Need at least year, month, day
+        if (groups.length < 3) continue;
+
+        const [yyyy, MM, dd, hh = '00', min = '00'] = groups;
+
+        // Sanity checks
+        const y = parseInt(yyyy, 10);
+        const mo = parseInt(MM, 10);
+        const day = parseInt(dd, 10);
+        const hr = parseInt(hh, 10);
+        const mn = parseInt(min, 10);
+
+        if (y < 2000 || y > 2099) continue;
+        if (mo < 1 || mo > 12) continue;
+        if (day < 1 || day > 31) continue;
+        if (hr > 23 || mn > 59) continue;
+
+        return {
+          date: `${yyyy}-${MM.padStart(2,'0')}-${dd.padStart(2,'0')}`,
+          time: `${hh.padStart(2,'0')}:${min.padStart(2,'0')}`,
+        };
+      }
+
+      return null;
+    }
+
+    function loadImageFile(file) {
+      if (!file.type.match('image.*')) {
+        alert('Please select an image file (PNG, JPG, WEBP, etc.)');
+        return;
+      }
+
+      loader.style.display = 'flex';
+      warningBanner.style.display = 'none';
+      isSampleLoaded = false;
+      uploadedFileName = file.name;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        
+        // Try to extract date, time, and GPS from the uploaded file's EXIF metadata
+        const exifData = tryExtractExifDateTime(dataUrl);
+        const extracted = { dateTime: false, gps: false };
+
+        if (exifData) {
+          if (exifData.dateTime) {
+            extracted.dateTime = 'exif';
+            settings.manualOverride = true;
+            toggleManualOverride.checked = true;
+
+            settings.manualDate = exifData.dateTime.date;
+            settings.manualTime = exifData.dateTime.time;
+
+            inputDatePicker.value = exifData.dateTime.date;
+            inputTimePicker.value = exifData.dateTime.time;
+
+            updateManualInputState();
+          } else {
+            // No date/time in EXIF — try filename next
+            const fnDT = tryExtractDateTimeFromFilename(file.name);
+            if (fnDT) {
+              extracted.dateTime = 'filename';
+              settings.manualOverride = true;
+              toggleManualOverride.checked = true;
+
+              settings.manualDate = fnDT.date;
+              settings.manualTime = fnDT.time;
+
+              inputDatePicker.value = fnDT.date;
+              inputTimePicker.value = fnDT.time;
+
+              updateManualInputState();
+            } else {
+              fillInputsWithCurrentTime();
+            }
+          }
+
+          if (exifData.gps) {
+            extracted.gps = true;
+            fetchAddressFromGPS(exifData.gps.lat, exifData.gps.lon);
+          } else {
+            settings.customLocation = '';
+            inputCustomLocation.value = '';
+          }
+        } else {
+          // No EXIF at all — try filename, then fall back to current time
+          const fnDT = tryExtractDateTimeFromFilename(file.name);
+          if (fnDT) {
+            extracted.dateTime = 'filename';
+            settings.manualOverride = true;
+            toggleManualOverride.checked = true;
+
+            settings.manualDate = fnDT.date;
+            settings.manualTime = fnDT.time;
+
+            inputDatePicker.value = fnDT.date;
+            inputTimePicker.value = fnDT.time;
+
+            updateManualInputState();
+          } else {
+            fillInputsWithCurrentTime();
+          }
+          settings.customLocation = '';
+          inputCustomLocation.value = '';
+        }
+
+        // Show toast summarising what was auto-extracted
+        setTimeout(() => {
+          if (extracted.dateTime === 'exif' && extracted.gps) {
+            showToast('📷 Date, time & location read from photo metadata', 'success');
+          } else if (extracted.dateTime === 'exif') {
+            showToast('📷 Date & time read from EXIF metadata', 'success');
+          } else if (extracted.dateTime === 'filename' && extracted.gps) {
+            showToast('📂 Date from filename · 📍 Location from GPS', 'success');
+          } else if (extracted.dateTime === 'filename') {
+            showToast('📂 Date & time read from filename', 'info');
+          } else if (extracted.gps) {
+            showToast('📍 Location read from GPS — date set to now', 'info');
+          } else {
+            showToast('ℹ️ No metadata found — using current date & time', 'warn');
+          }
+        }, 300);
+
+        originalImage = new Image();
+        originalImage.onload = () => {
+          loader.style.display = 'none';
+          redraw();
+        };
+        originalImage.onerror = () => {
+          loader.style.display = 'none';
+          alert('Failed to load image. File may be corrupted.');
+        };
+        originalImage.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function fetchAddressFromGPS(lat, lon) {
+      const lang = settings.locale.split('-')[0];
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=${lang}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.address) {
+            const addr = data.address;
+            const road = addr.road || addr.suburb || addr.neighbourhood || '';
+            const postcode = addr.postcode || '';
+            const city = addr.city || addr.town || addr.village || addr.municipality || '';
+            let formattedAddress = '';
+            
+            if (road) formattedAddress += road;
+            
+            let cityPart = `${postcode} ${city}`.trim();
+            if (cityPart) {
+              if (formattedAddress) formattedAddress += ', ';
+              formattedAddress += cityPart;
+            }
+            
+            if (!formattedAddress) {
+              formattedAddress = data.display_name;
+            }
+            
+            settings.customLocation = formattedAddress;
+            inputCustomLocation.value = formattedAddress;
+            redraw();
+          }
+        })
+        .catch(err => {
+          console.warn('Reverse geocoding failed, leaving location empty:', err);
+          settings.customLocation = '';
+          inputCustomLocation.value = '';
+          redraw();
+        });
+    }
+
+    // Default sample image loader
+    function loadDefaultImage() {
+      loader.style.display = 'flex';
+      warningBanner.style.display = 'none';
+      isSampleLoaded = true;
+      uploadedFileName = 'sample.png';
+
+      originalImage = new Image();
+      // Setup CORS header just in case, though it's local
+      originalImage.crossOrigin = "anonymous";
+      
+      originalImage.onload = () => {
+        loader.style.display = 'none';
+        redraw();
+      };
+      
+      originalImage.onerror = () => {
+        // Fallback for file:// or CORS blocks
+        console.warn("Failed to load sample.png. Generating visual gradient fallback.");
+        createGradientFallback();
+      };
+      
+      // Load sample.png from directory
+      originalImage.src = 'sample.png';
+    }
+
+    // Gorgeous linear gradient canvas generator (avoids file:// CORS taint)
+    function createGradientFallback() {
+      const fallbackCanvas = document.createElement('canvas');
+      fallbackCanvas.width = 1920;
+      fallbackCanvas.height = 1080;
+      const ctx = fallbackCanvas.getContext('2d');
+      
+      // sunset gradient
+      const grad = ctx.createLinearGradient(0, 0, 1920, 1080);
+      grad.addColorStop(0, '#101116');
+      grad.addColorStop(0.4, '#241a22');
+      grad.addColorStop(0.7, '#4e282d');
+      grad.addColorStop(1, '#8c3d2b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1920, 1080);
+      
+      // adding subtle light particles
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      for (let i = 0; i < 40; i++) {
+        ctx.beginPath();
+        const r = Math.random() * 200 + 40;
+        ctx.arc(Math.random() * 1920, Math.random() * 1080, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw subtle mountain silhouette at the bottom
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.beginPath();
+      ctx.moveTo(0, 1080);
+      ctx.lineTo(0, 800);
+      ctx.quadraticCurveTo(480, 700, 960, 850);
+      ctx.quadraticCurveTo(1440, 1000, 1920, 750);
+      ctx.lineTo(1920, 1080);
+      ctx.fill();
+      
+      originalImage = new Image();
+      originalImage.onload = () => {
+        loader.style.display = 'none';
+        redraw();
+      };
+      originalImage.src = fallbackCanvas.toDataURL('image/png');
+    }
+
+    // CANVAS DRAWING ENGINE (RESOLUTION INDEPENDENT)
+    function redraw() {
+      if (!originalImage.width) return;
+      
+      const width = originalImage.width;
+      const height = originalImage.height;
+      
+      exportCanvas.width = width;
+      exportCanvas.height = height;
+      
+      const ctx = exportCanvas.getContext('2d');
+      ctx.clearRect(0, 0, width, height);
+      
+      // 1. Draw original base image
+      ctx.drawImage(originalImage, 0, 0);
+      
+      // 2. Compute date/time content
+      let timeText = "";
+      let ampmText = "";
+      let rightLine1 = "";
+      let rightLine2 = "";
+      
+      let dateObj;
+      {
+        const [yearStr, monthStr, dayStr] = settings.manualDate.split('-');
+        const [hourStr, minStr] = settings.manualTime.split(':');
+        
+        dateObj = new Date(
+          parseInt(yearStr, 10),
+          parseInt(monthStr, 10) - 1,
+          parseInt(dayStr, 10),
+          parseInt(hourStr, 10) || 0,
+          parseInt(minStr, 10) || 0
+        );
+      }
+      
+      const formatted = getFormattedDateTime(dateObj, settings.locale, settings.is12h);
+      
+      timeText = formatted.time;
+      ampmText = formatted.ampm;
+      
+      if (settings.preset === 'layoutA') {
+        rightLine1 = `${formatted.day} ${formatted.month} ${formatted.year}`;
+        rightLine2 = formatted.weekday;
+      } else if (settings.preset === 'layoutB') {
+        rightLine1 = `${formatted.day} ${formatted.month}`;
+        rightLine2 = `${formatted.year}`;
+      } else {
+        rightLine1 = settings.customLine1 || "";
+        rightLine2 = settings.customLine2 || "";
+      }
+      
+      // 3. Draw Watermark Layer
+      // Font sizes scale proportionally with the image short edge
+      const shortEdge = Math.min(width, height);
+      const baseFontSize = shortEdge * 0.065 * settings.scale;
+      
+      // Margins
+      const marginX = width * (settings.marginX / 100);
+      const marginY = height * (settings.marginY / 100);
+      
+      // Pos bottom-left
+      const timeX = marginX;
+      let timeY = height - marginY;
+      
+      const hasLocation = !!settings.customLocation;
+      if (hasLocation) {
+        timeY -= baseFontSize * 0.42; // Shift time block up to fit location
+      }
+      
+      // Set Drop Shadows for maximum legibility on light/dark backgrounds
+      ctx.shadowColor = `rgba(0, 0, 0, ${Math.min(1, settings.shadowOpacity * 1.2)})`;  // 0.5 slider → 0.6 rendered
+      ctx.shadowBlur = baseFontSize * 0.042 * settings.shadowBlur;
+      ctx.shadowOffsetX = baseFontSize * 0.02 * settings.shadowOffset;
+      ctx.shadowOffsetY = baseFontSize * 0.02 * settings.shadowOffset;
+      
+      const fontFamily = settings.fontFamily;
+      
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = settings.textColor;
+      
+      // 3.1. Draw Time
+      ctx.font = `400 ${baseFontSize}px '${fontFamily}', sans-serif`;
+      ctx.fillText(timeText, timeX, timeY);
+      const timeWidth = ctx.measureText(timeText).width;
+      
+      // Get precise measurements of the rendered time text for alignment
+      const metrics = ctx.measureText(timeText);
+      const textTop = timeY - metrics.actualBoundingBoxAscent;
+      const textBottom = timeY + metrics.actualBoundingBoxDescent;
+      const textHeight = textBottom - textTop;
+      const textCenterY = textTop + textHeight / 2;
+      
+      // Calculate divider top and bottom dynamically centered around the time text
+      const halfDividerHeight = (textHeight * settings.dividerHeight) / 2;
+      const dividerTop = textCenterY - halfDividerHeight;
+      const dividerBottom = textCenterY + halfDividerHeight;
+      
+      // 3.2. Draw AM/PM if active
+      let ampmWidth = 0;
+      if (settings.is12h && ampmText) {
+        // AM/PM is smaller and top-aligned with the time text
+        ctx.textBaseline = 'top';
+        ctx.font = `400 ${baseFontSize * 0.35}px '${fontFamily}', sans-serif`;
+        const ampmX = timeX + timeWidth + (baseFontSize * 0.08);
+        const ampmY = textTop; // Align flush with the top of numbers
+        ctx.fillText(ampmText, ampmX, ampmY);
+        ampmWidth = ctx.measureText(ampmText).width + (baseFontSize * 0.08);
+        ctx.textBaseline = 'bottom'; // Restore
+      }
+      
+      // 3.3. Draw vertical divider line
+      const dividerX = timeX + timeWidth + ampmWidth + (baseFontSize * 0.18 * settings.dividerOffset);
+      ctx.strokeStyle = settings.dividerColor;
+      ctx.lineWidth = baseFontSize * 0.05005 * settings.dividerWidth; // calibrated: 1.0x = old 1.1x
+      
+      ctx.beginPath();
+      ctx.moveTo(dividerX, dividerTop);
+      ctx.lineTo(dividerX, dividerBottom);
+      ctx.stroke();
+      
+      // 3.4. Draw Right date lines
+      // Measure each line's true ink boundaries so the glyphs sit pixel-perfectly
+      // flush against the top and bottom of the divider (no font leading gaps).
+      const rightTextX = dividerX + (baseFontSize * 0.18 * settings.dividerOffset);
+      const rightFontSize = baseFontSize * 0.35;
+
+      ctx.font = `400 ${rightFontSize}px '${fontFamily}', sans-serif`;
+      ctx.textBaseline = 'alphabetic';
+
+      const mTop = ctx.measureText(rightLine1 || ' ');
+      const mBot = ctx.measureText(rightLine2 || ' ');
+
+      // Top line: position so its top ink edge aligns with dividerTop
+      const topLineY = dividerTop + mTop.actualBoundingBoxAscent;
+      ctx.fillText(rightLine1, rightTextX, topLineY);
+
+      // Bottom line: position so its bottom ink edge aligns with dividerBottom
+      const botLineY = dividerBottom - mBot.actualBoundingBoxDescent;
+      ctx.fillText(rightLine2, rightTextX, botLineY);
+      
+      // 3.5. Draw Location line if present
+      if (hasLocation) {
+        ctx.font = `400 ${baseFontSize * 0.32}px '${fontFamily}', sans-serif`;
+        ctx.fillText(settings.customLocation, timeX, height - marginY - baseFontSize * 0.02);
+      }
+      
+      // Reset shadow so it doesn't affect subsequent canvas scaling
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      
+      // 4. Update the responsive preview canvas
+      updatePreview();
+    }
+
+    // Renders the export canvas onto the preview viewport container
+    function updatePreview() {
+      const container = document.getElementById('preview-viewport');
+      const isMobile = window.innerWidth <= 900;
+      const padding = isMobile ? 24 : 80;
+      const containerWidth = container.clientWidth - padding;
+      const containerHeight = container.clientHeight - padding;
+      
+      if (containerWidth <= 0 || containerHeight <= 0 || !exportCanvas.width) return;
+      
+      const imgWidth = exportCanvas.width;
+      const imgHeight = exportCanvas.height;
+      const imgRatio = imgWidth / imgHeight;
+      const containerRatio = containerWidth / containerHeight;
+      
+      let displayWidth, displayHeight;
+      if (imgRatio > containerRatio) {
+        displayWidth = containerWidth;
+        displayHeight = containerWidth / imgRatio;
+      } else {
+        displayHeight = containerHeight;
+        displayWidth = containerHeight * imgRatio;
+      }
+      
+      const dpr = window.devicePixelRatio || 1;
+      previewCanvas.width = displayWidth * dpr;
+      previewCanvas.height = displayHeight * dpr;
+      
+      previewCanvas.style.width = displayWidth + 'px';
+      previewCanvas.style.height = displayHeight + 'px';
+      
+      const pCtx = previewCanvas.getContext('2d');
+      pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      
+      // Downscale high-resolution drawing canvas onto crisp preview canvas
+      pCtx.drawImage(exportCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+    }
+
+    function getWatermarkedDataURLWithExif() {
+      const dataUrl = exportCanvas.toDataURL('image/jpeg', 0.95);
+      
+      let dateObj;
+      {
+        const [yearStr, monthStr, dayStr] = settings.manualDate.split('-');
+        const [hourStr, minStr] = settings.manualTime.split(':');
+        dateObj = new Date(
+          parseInt(yearStr, 10),
+          parseInt(monthStr, 10) - 1,
+          parseInt(dayStr, 10),
+          parseInt(hourStr, 10) || 0,
+          parseInt(minStr, 10) || 0
+        );
+      }
+      
+      const yyyy = dateObj.getFullYear();
+      const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+      const dd = dateObj.getDate().toString().padStart(2, '0');
+      const hh = dateObj.getHours().toString().padStart(2, '0');
+      const min = dateObj.getMinutes().toString().padStart(2, '0');
+      const ss = dateObj.getSeconds().toString().padStart(2, '0');
+      const exifDateString = `${yyyy}:${mm}:${dd} ${hh}:${min}:${ss}`;
+      
+      try {
+        const zeroth = {};
+        const exif = {};
+        
+        zeroth[piexif.ImageIFD.DateTime] = exifDateString;
+        exif[piexif.ExifIFD.DateTimeOriginal] = exifDateString;
+        exif[piexif.ExifIFD.DateTimeDigitized] = exifDateString;
+        
+        const exifObj = { "0th": zeroth, "Exif": exif };
+        const exifStr = piexif.dump(exifObj);
+        return piexif.insert(exifStr, dataUrl);
+      } catch (exifErr) {
+        console.error("Failed to inject EXIF metadata:", exifErr);
+        return dataUrl;
+      }
+    }
+
+    // Filename pattern replacer to preserve naming conventions but update timestamps
+    function generateSpoofedFilename(originalName, dateObj) {
+      if (!originalName) return 'watermarked_image.jpg';
+      
+      const lastDot = originalName.lastIndexOf('.');
+      let baseName = lastDot !== -1 ? originalName.slice(0, lastDot) : originalName;
+      const ext = lastDot !== -1 ? originalName.slice(lastDot) : '.jpg';
+      
+      const yyyy = dateObj.getFullYear();
+      const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+      const dd = dateObj.getDate().toString().padStart(2, '0');
+      const hh = dateObj.getHours().toString().padStart(2, '0');
+      const min = dateObj.getMinutes().toString().padStart(2, '0');
+      const ss = dateObj.getSeconds().toString().padStart(2, '0');
+      
+      const date8 = `${yyyy}${mm}${dd}`;
+      const time6 = `${hh}${min}${ss}`;
+      const dateHyphen = `${yyyy}-${mm}-${dd}`;
+      const timeDot = `${hh}.${min}.${ss}`;
+      const timeHyphen = `${hh}-${min}-${ss}`;
+
+      const pattern1 = /\b(19|20)\d{6}_\d{6}\b/;
+      const pattern2 = /\b(19|20)\d{6}-\d{6}\b/;
+      const pattern3 = /\b(19|20)\d{2}-\d{2}-\d{2}[-_]\d{2}[-._]\d{2}[-._]\d{2}\b/;
+      const pattern4 = /(19|20)\d{2}-\d{2}-\d{2} at \d{2}\.\d{2}\.\d{2}/;
+
+      let replaced = false;
+
+      if (pattern1.test(baseName)) {
+        baseName = baseName.replace(/(19|20)\d{6}_\d{6}/, `${date8}_${time6}`);
+        replaced = true;
+      } else if (pattern2.test(baseName)) {
+        baseName = baseName.replace(/(19|20)\d{6}-\d{6}/, `${date8}-${time6}`);
+        replaced = true;
+      } else if (pattern3.test(baseName)) {
+        const match = baseName.match(/(19|20)\d{2}-\d{2}-\d{2}([-_])\d{2}([-._])\d{2}([-._])\d{2}/);
+        if (match) {
+          const sep = match[2];
+          const timeSep = match[3];
+          baseName = baseName.replace(/(19|20)\d{2}-\d{2}-\d{2}[-_]\d{2}[-._]\d{2}[-._]\d{2}/, `${dateHyphen}${sep}${hh}${timeSep}${min}${timeSep}${ss}`);
+          replaced = true;
+        }
+      } else if (pattern4.test(baseName)) {
+        baseName = baseName.replace(/(19|20)\d{2}-\d{2}-\d{2} at \d{2}\.\d{2}\.\d{2}/, `${dateHyphen} at ${timeDot}`);
+        replaced = true;
+      }
+      
+      if (!replaced) {
+        baseName = `${baseName}_${date8}_${time6}`;
+      }
+      
+      return `${baseName}${ext}`;
+    }
+
+    // High quality export uploader
+    function downloadWatermarkedImage() {
+      let dateObj;
+      {
+        const [yearStr, monthStr, dayStr] = settings.manualDate.split('-');
+        const [hourStr, minStr] = settings.manualTime.split(':');
+        dateObj = new Date(
+          parseInt(yearStr, 10),
+          parseInt(monthStr, 10) - 1,
+          parseInt(dayStr, 10),
+          parseInt(hourStr, 10) || 0,
+          parseInt(minStr, 10) || 0
+        );
+      }
+      
+      const filename = generateSpoofedFilename(uploadedFileName, dateObj);
+
+      if (isSampleLoaded && window.location.protocol === 'file:') {
+        // Show CORS warning banner instead of erroring
+        warningBanner.style.display = 'flex';
+        try {
+          const url = getWatermarkedDataURLWithExif();
+          triggerDownload(url, filename);
+        } catch (err) {
+          console.error(err);
+          alert("Security Error: Browser blocked local sample uploader due to CORS. Please click 'Upload Image' to choose your own image, which works 100% locally!");
+        }
+        return;
+      }
+
+      try {
+        loader.style.display = 'flex';
+        // Small delay to let spinner display
+        setTimeout(() => {
+          try {
+            const url = getWatermarkedDataURLWithExif();
+            triggerDownload(url, filename);
+          } catch (err) {
+            console.error(err);
+            alert("Export failed: " + err.message);
+          } finally {
+            loader.style.display = 'none';
+          }
+        }, 100);
+      } catch (err) {
+        loader.style.display = 'none';
+        console.error(err);
+        alert("Export failed: " + err.message);
+      }
+    }
+
+    function triggerDownload(url, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
