@@ -1,48 +1,63 @@
-# 📸 Timemark Replica - Watermark Studio ⚡
+# Timemark Replica
 
-A high-fidelity, resolution-independent camera timestamp watermark tool designed to look identical to the **Timemark** app watermarks. 
+A browser-based camera timestamp watermark tool that replicates the look of the **Timemark** app. Built with HTML5 Canvas, vanilla JavaScript, and CSS — everything runs locally in your browser with no server uploads.
 
-This is a **replica** watermark utility built entirely with HTML5 Canvas, Javascript, and Vanilla CSS. It runs 100% locally in your browser and lets you batch/single-watermark photos with precise design control.
+## Features
 
----
+- **Timemark-style watermark** — tall condensed clock, vertical divider line, stacked date lines, and drop shadows that scale with image resolution
+- **27 locales** — date and weekday formatting via `Intl` (Indonesian, Japanese, Chinese, Korean, Swedish, Arabic, and more)
+- **Timezone-aware defaults** — locale is auto-detected from your IANA timezone on load
+- **Smart metadata import** on image upload:
+  - Date/time from EXIF
+  - Filename timestamp fallback (e.g. `IMG_20240609_143022.jpg`)
+  - GPS reverse geocoding for location (OpenStreetMap Nominatim)
+  - Toast feedback showing what was extracted
+- **Manual overrides** — edit date, time, date lines, and location; weekday is inferred from the selected date
+- **Layout presets** — two built-in date layouts plus a fully custom text mode
+- **Design controls** — font family (Barlow Condensed / Oswald), 12h/24h clock, text/divider colors, scale, margins, divider size/offset, shadow opacity/blur/offset
+- **EXIF on export** — downloaded JPEGs include injected date/time metadata via [piexifjs](https://github.com/hMatoba/piexifjs)
+- **Drag & drop** — drop an image anywhere on the preview to load it
+- **Private** — images never leave your device
 
-## ✨ Features
+## Getting Started
 
-- **🎯 Exact Timemark Replica**: Tall, condensed clock lettering, a vertical yellow/gold line, and stacked date details with drop shadows.
-- **🌐 Dynamic Multi-Language Locales**: Formats the date and day-of-week dynamically based on the chosen language (e.g. Indonesian `id-ID` yields `28 Mei 2026` & `Kamis`).
-- **📏 Resolution-Independent Canvas Drawing**: Scales the font sizes and margins relative to the uploaded image's short edge so that the watermark looks identical on a 400px profile pic or a 5000px DSLR photo!
-- **⚡ Interactive Controls**:
-  - Live clock toggles vs manual overrides (type whatever you want).
-  - Sliders for scale, margins (X & Y), divider height/thickness, and drop-shadow intensity.
-  - **🔄 Reset Fidelity** button to instantly restore dividers and shadows back to the reference design settings.
-- **🎨 Design Customizations**: Adjust font color, divider color, and pick from Google Fonts like `Barlow Condensed`, `Roboto Condensed`, `Oswald`, and `Share Tech Mono`.
-- **💻 Drag & Drop**: Drop any image anywhere onto the preview area to import it instantly.
-- **🔒 Private & Secure**: Zero server uploads! Your images are processed entirely in your browser.
+### Install
 
----
-
-## 🚀 Getting Started
-
-### 1. Installation
-First, open your terminal, navigate to the folder, and install dependencies:
 ```bash
-cd /Users/okasi/Developer/timemark-replica
+git clone https://github.com/okasi/timemark-replica.git
+cd timemark-replica
 npm install
 ```
 
-### 2. Start the Local Dev Server
-Run the Vite development server:
+### Development
+
 ```bash
 npm run dev
 ```
 
-### 3. Open the App
-Open the local URL in your browser:
-👉 **[http://localhost:5173/](http://localhost:5173/)**
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
----
+### Production build
 
-## 🛠️ Tech Stack
-- **Core**: HTML5, Canvas API, JavaScript (ES6)
-- **Styling**: Vanilla CSS (CSS Grid, Variables, Glassmorphism backdrop-filters)
-- **Tooling**: Vite (for dev server)
+```bash
+npm run build
+```
+
+Output is written to `dist/`. The Vite config uses relative asset paths (`base: './'`) so the build works on GitHub Pages.
+
+## Deployment
+
+Pushes to `main` automatically deploy to GitHub Pages via the workflow in `.github/workflows/deploy.yml` (Node 24, `npm ci` + `npm run build`).
+
+## Tech Stack
+
+| Layer | Stack |
+|---|---|
+| Core | HTML5, Canvas API, ES modules |
+| Styling | Vanilla CSS (Grid, custom properties, glassmorphism) |
+| Metadata | [piexifjs](https://www.npmjs.com/package/piexifjs) |
+| Tooling | Vite 5 |
+
+## License
+
+MIT
