@@ -9,6 +9,7 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
-    "piexifjs": "^1.0.6"
+    "piexifjs": "^1.0.6",
+    "playwright": "^1.49.0"
   }
 }
